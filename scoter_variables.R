@@ -50,7 +50,7 @@ sco2$substrate=extract(substrate,scotsubtr)
 #combined with scoters data
 sco2$sub2=scale(sco2$substrate)
 #standardize covariates for comparison of beta estimates later on
-head(sco2)
+
 
 #sediment mobility
 
@@ -63,10 +63,3 @@ sedmob<-spTransform(sedmobility, CRS("+proj=longlat +datum=WGS84"))
 #assigned same projection as bathy
 head(sedmobility)
 
-scotsedmob=SpatialPoints(sco2)
-sco2$sedmobility=extract(sedmobility,scotsedmob)
-#extract sediment mobility measure at each spatial location 
-#combined with scoters data
-sco2$sedmobility2=scale(sco2$sedmobility)
-#standardize covariates for comparison of beta estimates later on
-head(sco2)
