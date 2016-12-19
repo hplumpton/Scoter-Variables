@@ -1,6 +1,7 @@
 library(rgdal)
 library(maps)
 library(raster)
+library(rgeos)
 library(maptools)
 
 #bathymetry
@@ -30,7 +31,6 @@ sco2$bathy=extract(bathy,sco3)
 #combined with scoters data
 sco2$bathy2=scale(sco2$bathy) 
 #standardize covariates for comparison of beta estimates later on
-head(sco2)
 
 #substrate
 
@@ -42,15 +42,13 @@ summary(substrate)
 proj4string(bathy)
 sub<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
 #assigned same projection as bathy
-head(substrate)
 
 scotsubtr=SpatialPoints(sco2)
-sco2$substrate=extract(substrate,scotsubtr)
+sco2$substrate=extract(sub,scotsubtr)
 #extract substrate measure at each spatial laoction 
 #combined with scoters data
 sco2$sub2=scale(sco2$substrate)
 #standardize covariates for comparison of beta estimates later on
-head(sco2)
 
 #sediment mobility
 
@@ -69,4 +67,7 @@ sco2$sedmobility=extract(sedmobility,scotsedmob)
 #combined with scoters data
 sco2$sedmobility2=scale(sco2$sedmobility)
 #standardize covariates for comparison of beta estimates later on
-head(sco2)
+
+#transect data
+
+transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
