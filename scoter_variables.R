@@ -44,6 +44,9 @@ sub<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
 #assigned same projection as bathy
 
 scotsubtr=SpatialPoints(sco2)
+scotsubtr<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
+proj4string(scotsubtr)<-CRS("+proj=longlat +datum=WGS84")
+
 sco2$substrate=extract(sub,scotsubtr)
 #extract substrate measure at each spatial laoction 
 #combined with scoters data
@@ -62,7 +65,8 @@ sedmob<-spTransform(sedmobility, CRS("+proj=longlat +datum=WGS84"))
 head(sedmobility)
 
 scotsedmob=SpatialPoints(sco2)
-sco2$sedmobility=extract(sedmobility,scotsedmob)
+proj4string(scotsedmob)<-CRS("+proj=longlat +datum=WGS84")
+sco2$sedmobility=extract(sedmob,scotsedmob)
 #extract sediment mobility measure at each spatial location 
 #combined with scoters data
 sco2$sedmobility2=scale(sco2$sedmobility)
@@ -71,3 +75,6 @@ sco2$sedmobility2=scale(sco2$sedmobility)
 #transect data
 
 transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
+proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
+plot(transect)
+map("state", add=TRUE)
