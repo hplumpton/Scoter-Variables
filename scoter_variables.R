@@ -3,6 +3,8 @@ library(maps)
 library(raster)
 library(rgeos)
 library(maptools)
+library(ggplot2)
+library(maptools)
 
 #bathymetry
 
@@ -72,9 +74,24 @@ sco2$sedmobility=extract(sedmob,scotsedmob)
 sco2$sedmobility2=scale(sco2$sedmobility)
 #standardize covariates for comparison of beta estimates later on
 
+#ocean floor slope
+
+bathy=raster("Layers/etopo1 bathymetry.tif")
+image(bathy)
+summary(bathy)
+head(bathy)
+
+cellStats(bathy, 'range')
+
 #transect data
 
 transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
 proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
 plot(transect)
 map("state", add=TRUE)
+head(transect)
+
+
+    
+#dividing transects into grids
+
