@@ -4,7 +4,6 @@ library(raster)
 library(rgeos)
 library(maptools)
 library(ggplot2)
-library(maptools)
 
 #bathymetry
 
@@ -18,7 +17,7 @@ summary(scoters)
 
 coordinates(scoters)<-c("longitude_dd","latitude_dd") 
 #define x&y coordinates
-proj4string(scoters)<-CRS("+init=epsg:4326") 
+proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
 #assigning a projection
 plot(scoters,add=TRUE)
 
@@ -41,9 +40,20 @@ proj4string(substrate)<-CRS("+proj=longlat +datum=WGS84")
 image(substrate)
 summary(substrate)
 
-proj4string(bathy)
+scoters=read.csv("ObsData2.csv",header=TRUE)
+scoters <-na.omit(scoters)
+summary(scoters)
+
+coordinates(scoters)<-c("longitude_dd","latitude_dd") 
+#define x&y coordinates
+proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
+#assigning a projection
+plot(scoters,add=TRUE)
+
 sub<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
 #assigned same projection as bathy
+sco2=spTransform(scoters,CRS(proj4string(bathy))) 
+#assign same projection as bathy
 
 scotsubtr=SpatialPoints(sco2)
 scotsubtr<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
@@ -62,8 +72,20 @@ proj4string(sedmobility)<-CRS("+proj=longlat +datum=WGS84")
 image(sedmobility)
 summary(sedmobility)
 
+scoters=read.csv("ObsData2.csv",header=TRUE)
+scoters <-na.omit(scoters)
+summary(scoters)
+
+coordinates(scoters)<-c("longitude_dd","latitude_dd") 
+#define x&y coordinates
+proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
+#assigning a projection
+plot(scoters,add=TRUE)
+
 sedmob<-spTransform(sedmobility, CRS("+proj=longlat +datum=WGS84"))
 #assigned same projection as bathy
+sco2=spTransform(scoters,CRS(proj4string(bathy))) 
+#assign same projection as bathy
 head(sedmobility)
 
 scotsedmob=SpatialPoints(sco2)
@@ -79,9 +101,39 @@ sco2$sedmobility2=scale(sco2$sedmobility)
 bathy=raster("Layers/etopo1 bathymetry.tif")
 image(bathy)
 summary(bathy)
-head(bathy)
 
-cellStats(bathy, 'range')
+slope<-terrain(bathy, opt=c('slope'), unit='degrees')
+summary(slope)
+head(slope)
+
+scoters=read.csv("ObsData2.csv",header=TRUE)
+scoters <-na.omit(scoters)
+summary(scoters)
+
+coordinates(scoters)<-c("longitude_dd","latitude_dd") 
+#define x&y coordinates
+proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
+#assigning a projection
+plot(scoters,add=TRUE)
+
+sco2=spTransform(scoters,CRS(proj4string(bathy))) 
+#assign same projection as bathy
+
+scotslope=SpatialPoints(sco2)
+proj4string(scotslope)<-CRS("+proj=longlat +datum=WGS84")
+sco2$slope=extract(slope,scotslope)
+#extract sediment mobility measure at each spatial location 
+#combined with scoters data
+sco2$slope2=scale(sco2$slope)
+#standardize covariates for comparison of beta estimates later on
+
+#distance to shore
+
+shoreline=readShapePoly("Layers/shoreline/GSHHS_shp/i/GSHHS_i_L1.shp")
+proj4string(shoreline)<-CRS("+proj=longlat +datum=WGS84")
+plot(shoreline)
+
+
 
 #transect data
 
@@ -91,7 +143,13 @@ plot(transect)
 map("state", add=TRUE)
 head(transect)
 
-
-    
 #dividing transects into grids
 
+library(DSpat)
+strtransect<-lines_to_strips(transects, study.area ='transect', width=250)
+
+
+
+#North Atlantic Oscillation
+#Fine Scale Weather
+#Bivalve Distribution
