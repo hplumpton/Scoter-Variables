@@ -59,6 +59,9 @@ scotsubtr=SpatialPoints(sco2)
 scotsubtr<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
 proj4string(scotsubtr)<-CRS("+proj=longlat +datum=WGS84")
 
+#need to work on next two commands there are errors, 
+#first command doest not like the extract function
+
 sco2$substrate=extract(sub,scotsubtr)
 #extract substrate measure at each spatial laoction 
 #combined with scoters data
@@ -69,7 +72,7 @@ sco2$sub2=scale(sco2$substrate)
 
 sedmobility=readShapePoly("Layers/sediment mobility/SAB_median/SAB_median.shp")
 proj4string(sedmobility)<-CRS("+proj=longlat +datum=WGS84")
-image(sedmobility)
+plot(sedmobility)
 summary(sedmobility)
 
 scoters=read.csv("ObsData2.csv",header=TRUE)
@@ -136,7 +139,6 @@ image(shoreline)
 extent(shoreline)
 seshoreline <- crop(shoreline, extent(-82, -72, 30, 39))
 proj4string(seshoreline)<-CRS("+proj=longlat +datum=WGS84")
-image(seshoreline)
 summary(seshoreline)
 plot(seshoreline)
 
@@ -269,7 +271,8 @@ CreateSegments <- function(coords, length = 0, n.parts = 0) {
   return(newlines)
 }
 
-#extract x and y locations of segments for functions above. Example with transect 1
+#extract x and y locations of segments for functions above. 
+#Example with transect 1
 transect.locs=coordinates(tran.sub)[[1]][[1]]
 
 #length in m -- update segment length to relevant length for analysis
@@ -340,6 +343,8 @@ sp.out=SpatialLines(new.lines,CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +
 #segment all transects
 sp.seg <- SegmentSpatialLines(sp.out, length = 1000, merge.last = TRUE)
 plot(sp.seg, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)
+
+#gridding transects
 
 
 
