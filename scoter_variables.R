@@ -33,6 +33,9 @@ sco2$bathy=extract(bathy,sco3)
 sco2$bathy2=scale(sco2$bathy) 
 #standardize covariates for comparison of beta estimates later on
 
+
+
+
 #substrate
 
 substrate=readShapePoly("Layers/substrate/conmapsg.shp")
@@ -40,7 +43,7 @@ proj4string(substrate)<-CRS("+proj=longlat +datum=WGS84")
 plot(substrate)
 summary(substrate)
 
-scoters=read.csv("ObsData2.csv",header=TRUE)
+scoters=data.frame(read.csv("ObsData2.csv",header=TRUE))
 scoters <-na.omit(scoters)
 summary(scoters)
 
@@ -50,23 +53,21 @@ proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84")
 #assigning a projection
 plot(scoters,add=TRUE)
 
-sub<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
-#assigned same projection as bathy
-sco2=spTransform(scoters,CRS(proj4string(bathy))) 
-#assign same projection as bathy
+sco2=spTransform(scoters,CRS(proj4string(substrate))) 
+#assign same projection as substrate
 
-scotsubtr=SpatialPoints(sco2)
-scotsubtr<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
-proj4string(scotsubtr)<-CRS("+proj=longlat +datum=WGS84")
-
-#need to work on next two commands there are errors, 
-#first command doest not like the extract function
-
-sco2$substrate=extract(sub,scotsubtr)
-#extract substrate measure at each spatial laoction 
+sco2$substrate=over(sco2,substrate)
+#extract substrate measure at each spatial location 
 #combined with scoters data
-sco2$sub2=scale(sco2$substrate)
+
+#gives error in colMeans(x, na.rm=TRUE) : 'x' must be numeric
+sco2$substrate2=scale(sco2$substrate)
 #standardize covariates for comparison of beta estimates later on
+
+head(sco2)
+
+
+
 
 #sediment mobility
 
@@ -86,9 +87,9 @@ proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84")
 plot(scoters,add=TRUE)
 
 sedmob<-spTransform(sedmobility, CRS("+proj=longlat +datum=WGS84"))
-#assigned same projection as bathy
-sco2=spTransform(scoters,CRS(proj4string(bathy))) 
-#assign same projection as bathy
+#assigned same projection as sedmobility
+sco2=spTransform(scoters,CRS(proj4string(sedmobility))) 
+#assign same projection as sedmobility
 head(sedmobility)
 
 scotsedmob=SpatialPoints(sco2)
@@ -98,6 +99,10 @@ sco2$sedmobility=extract(sedmob,scotsedmob)
 #combined with scoters data
 sco2$sedmobility2=scale(sco2$sedmobility)
 #standardize covariates for comparison of beta estimates later on
+
+
+
+
 
 #ocean floor slope
 
@@ -130,13 +135,15 @@ sco2$slope=extract(slope,scotslope)
 sco2$slope2=scale(sco2$slope)
 #standardize covariates for comparison of beta estimates later on
 
+
+
+
+
 #distance to shore
 
 shoreline=readShapePoly("Layers/shoreline/GSHHS_shp/i/GSHHS_i_L1.shp")
 proj4string(shoreline)<-CRS("+proj=longlat +datum=WGS84")
-image(shoreline)
 
-extent(shoreline)
 seshoreline <- crop(shoreline, extent(-82, -72, 30, 39))
 proj4string(seshoreline)<-CRS("+proj=longlat +datum=WGS84")
 summary(seshoreline)
@@ -152,33 +159,18 @@ proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84")
 #assigning a projection
 plot(scoters,add=TRUE)
 
-pts <- scoters[sample(1:dim(scoters)[1],142),]  
-seshoreline[["idist"]] = 1 - seshoreline[["dist"]]    
-polys <- as(seshoreline, "SpatialPolygonsDataFrame")
-polys <- polys[sample(1:dim(polys)[1],205),]   
-plot(polys)
-plot(pts,add=TRUE)      
+dist<-distanceFromPoints(seshoreline,scoters)
+proj4string(dist)<-CRS("+proj=longlat +datum=WGS84")
+head(dist)
 
-# LOOP USING gDistance, DISTANCES STORED IN LIST OBJECT
-Fdist <- list()
-for(i in 1:dim(pts)[1]) {
-  pDist <- vector()
-  for(j in 1:dim(polys)[1]) { 
-    pDist <- append(pDist, gDistance(pts[i,],polys[j,])) 
-  }
-  Fdist[[i]] <- pDist
-} 
+sco2=spTransform(scoters,CRS(proj4string(dist))) 
+#assign same projection as dist
 
-# RETURN POLYGON (NUMBER) WITH THE SMALLEST DISTANCE FOR EACH POINT  
-( min.dist <- unlist(lapply(Fdist, FUN=function(x) which(x == min(x))[1])) ) 
-
-# RETURN DISTANCE TO NEAREST POLYGON
-( PolyDist <- unlist(lapply(Fdist, FUN=function(x) min(x)[1])) ) 
-
-# CREATE POLYGON-ID AND MINIMUM DISTANCE COLUMNS IN POINT FEATURE CLASS
-pts@data <- data.frame(pts@data, PolyID=min.dist, PDist=PolyDist)
-head(pts@data)
-
+sco2$dist=extract(dist,sco2)
+#extract sediment mobility measure at each spatial location 
+#combined with scoters data
+sco2$dist2=scale(sco2$dist)
+#standardize covariates for comparison of beta estimates later on
 
 #transect data
 
@@ -191,6 +183,7 @@ proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
 library(DSpat)
 library(GISTools)
 library(spatstat)
+
 tran2=spTransform(transect,
                   CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
 tran.sub=tran2[!duplicated(tran2$Transect),] #subset to remove duplicates
@@ -344,7 +337,15 @@ sp.out=SpatialLines(new.lines,CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +
 sp.seg <- SegmentSpatialLines(sp.out, length = 1000, merge.last = TRUE)
 plot(sp.seg, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)
 
+
+
+
+
 #gridding transects
+temp=as.psp(sp.seg)
+
+grid<-lines_to_strips(lines,as.owin(tmp), width=250)
+plot(grid)
 
 
 
