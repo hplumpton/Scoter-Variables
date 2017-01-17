@@ -3,7 +3,6 @@ library(maps)
 library(raster)
 library(rgeos)
 library(maptools)
-library(ggplot2)
 
 #bathymetry
 
@@ -171,6 +170,10 @@ sco2$dist=extract(dist,sco2)
 #combined with scoters data
 sco2$dist2=scale(sco2$dist)
 #standardize covariates for comparison of beta estimates later on
+
+
+
+
 
 #transect data
 
@@ -342,10 +345,16 @@ plot(sp.seg, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)
 
 
 #gridding transects
-temp=as.psp(sp.seg)
 
-grid<-lines_to_strips(lines,as.owin(tmp), width=250)
-plot(grid)
+
+sp.seg$id=seq(1,18453) #add a unique ID to each transect
+names(sp.seg)
+summary(sp.seg)
+
+temp=as.psp(sp.seg[sp.seg$id==1,])
+
+grid<-lines_to_strips(lines,as.owin(temp), width=250)
+plot(grid, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)plot(grid)
 
 
 
