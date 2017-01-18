@@ -346,15 +346,31 @@ plot(sp.seg, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)
 
 #gridding transects
 
+x0=coordinates(sp.seg)[[1]][[1]][1,1]
+x1=coordinates(sp.seg)[[1]][[1]][1,1]
+y0=coordinates(sp.seg)[[1]][[1]][1,2]
+y1=coordinates(sp.seg)[[1]][[1]][1,2]
 
-sp.seg$id=seq(1,18453) #add a unique ID to each transect
+lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
+
+
+tran.locs=coordinates(sp.seg)[[1]][[1]]
+tran2=coordinates(sp.seg)[[2]][[1]]
+sp.seg$id=seq(1,544) #add a unique ID to each transect
+
+sl <- SpatialLines(list(Lines(list(Line(coords = tran.locs)), 
+                              ID = "1"), Lines(list(Line(coords = tran2)),ID = "2")))
+
+
+sp.seg=SpatialLines(new.lines,CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
+
 names(sp.seg)
 summary(sp.seg)
 
 temp=as.psp(sp.seg[sp.seg$id==1,])
 
 grid<-lines_to_strips(lines,as.owin(temp), width=250)
-plot(grid, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)plot(grid)
+plot(grid, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)
 
 
 
