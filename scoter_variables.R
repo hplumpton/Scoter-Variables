@@ -179,6 +179,8 @@ sco2$dist2=scale(sco2$dist)
 
 transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
 proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
+plot(transect)
+map("state", add=TRUE)
 
 #dividing transects into grids
 #segmenting transects
@@ -267,8 +269,7 @@ CreateSegments <- function(coords, length = 0, n.parts = 0) {
   return(newlines)
 }
 
-#extract x and y locations of segments for functions above. 
-#Example with transect 1
+#extract x and y locations of segments for functions above. Example with transect 1
 transect.locs=coordinates(tran.sub)[[1]][[1]]
 
 #length in m -- update segment length to relevant length for analysis
@@ -356,7 +357,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tran.locs=coordinates(sp.seg)[[1]][[1]]
 tran2=coordinates(sp.seg)[[2]][[1]]
-sp.seg$id=seq(1,544) #add a unique ID to each transect
+sp.seg$id=seq(1,18453) #add a unique ID to each transect
 
 sl <- SpatialLines(list(Lines(list(Line(coords = tran.locs)), 
                               ID = "1"), Lines(list(Line(coords = tran2)),ID = "2")))
