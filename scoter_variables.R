@@ -8,11 +8,9 @@ library(maptools)
 
 bathy=raster("Layers/etopo1 bathymetry.tif")
 image(bathy)
-summary(bathy)
 
 scoters=read.csv("ObsData2.csv",header=TRUE)
 scoters <-na.omit(scoters)
-summary(scoters)
 
 coordinates(scoters)<-c("longitude_dd","latitude_dd") 
 #define x&y coordinates
@@ -39,13 +37,13 @@ sco2$bathy2=scale(sco2$bathy)
 
 substrate=readShapePoly("Layers/substrate/conmapsg.shp")
 proj4string(substrate)<-CRS("+proj=longlat +datum=WGS84")
+
+
 plot(substrate)
-names(substrate)
-substrate$AREA<-NULL
-substrate$PERIMETER<-NULL
-substrate$SEDIMENT<-NULL
+
 plot(scoters,add=TRUE)
 
+substrate<-spTransform(substrate,CRS(proj4string(bathy)))
 
 sco2$substrate=over(sco2,substrate)
 #extract substrate measure at each spatial location 
@@ -59,13 +57,12 @@ head(sco2)
 
 slope<-terrain(bathy, opt=c('slope'), unit='degrees')
 summary(slope)
-head(slope)
 
 plot(scoters,add=TRUE)
 
-
 scotslope=SpatialPoints(sco2)
 proj4string(scotslope)<-CRS("+proj=longlat +datum=WGS84")
+
 sco2$slope=extract(slope,scotslope)
 #extract sediment mobility measure at each spatial location 
 #combined with scoters data
@@ -83,14 +80,12 @@ proj4string(shoreline)<-CRS("+proj=longlat +datum=WGS84")
 
 seshoreline <- crop(shoreline, extent(-82, -72, 30, 39))
 proj4string(seshoreline)<-CRS("+proj=longlat +datum=WGS84")
-summary(seshoreline)
 plot(seshoreline)
 
 plot(scoters,add=TRUE)
 
 dist<-distanceFromPoints(seshoreline,scoters)
 proj4string(dist)<-CRS("+proj=longlat +datum=WGS84")
-head(dist)
 
 sco2$dist=extract(dist,sco2)
 #extract sediment mobility measure at each spatial location 
@@ -98,8 +93,29 @@ sco2$dist=extract(dist,sco2)
 sco2$dist2=scale(sco2$dist)
 #standardize covariates for comparison of beta estimates later on
 
+head(sco2)
+
+#sediment mobility
+
+sedmobility=readShapePoly("Layers/sediment mobility/SAB_median/SAB_median.shp")
+sedmobility2=readShapePoly("Layers/sediment mobility/MAB_median/MAB_median.shp")
+sedmobility=sedmobility+sedmobility2
+proj4string(sedmobility)<-CRS("+proj=longlat +datum=WGS84")
+plot(sedmobility)
+
+
+plot(scoters,add=TRUE)
+
+sedmob<-spTransform(sedmobility, CRS(proj4string(bathy)))
+
+sco2$sedmob=extract(sedmob,sco2)
+#extract sediment mobility measure at each spatial location 
+#combined with scoters data
+sco2$sedmob2=scale(sco2$sedmob)
+#standardize covariates for comparison of beta estimates later on
 
 head(sco2)
+
 
 
 #negative binomial
@@ -127,43 +143,14 @@ m6$aic
 m7<-glm.nb(Count~slope2, data=sco2)
 m7$aic
 
-m8<-glm.nb(Count~substrate, data = sco2)
+names(sco2)
+names(substrate)
+m8<-glm.nb(Count~as.matrix(substrate), data = sco2)
 
 summary(sco2)
 
-#sediment mobility
-
-sedmobility=readShapePoly("Layers/sediment mobility/SAB_median/SAB_median.shp")
-proj4string(sedmobility)<-CRS("+proj=longlat +datum=WGS84")
-plot(sedmobility)
-summary(sedmobility)
 
 
-scoters=read.csv("ObsData2.csv",header=TRUE)
-scoters <-na.omit(scoters)
-summary(scoters)
-
-coordinates(scoters)<-c("longitude_dd","latitude_dd") 
-#define x&y coordinates
-proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
-#assigning a projection
-plot(scoters,add=TRUE)
-
-sedmob<-spTransform(sedmobility, CRS("+proj=longlat +datum=WGS84"))
-#assigned same projection as sedmobility
-sco2=spTransform(scoters,CRS(proj4string(sedmobility))) 
-#assign same projection as sedmobility
-head(sedmob)
-
-scotsedmob=SpatialPoints(sco2)
-proj4string(scotsedmob)<-CRS("+proj=longlat +datum=WGS84")
-sco2$sedmob=extract(sedmob,sco2)
-#extract sediment mobility measure at each spatial location 
-#combined with scoters data
-sco2$sedmobility2=scale(sco2$sedmob)
-#standardize covariates for comparison of beta estimates later on
-
-head(sco2)
 #transect data
 
 transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
