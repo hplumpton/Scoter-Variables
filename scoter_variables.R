@@ -38,7 +38,6 @@ sco2$bathy2=scale(sco2$bathy)
 substrate=readShapePoly("Layers/substrate/conmapsg.shp")
 proj4string(substrate)<-CRS("+proj=longlat +datum=WGS84")
 
-
 plot(substrate)
 
 plot(scoters,add=TRUE)
@@ -153,10 +152,33 @@ summary(sco2)
 
 #transect data
 
+names(transect)
 transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
 proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
-plot(transect)
-map("state", add=TRUE)
+map<-plot(transect)
+map<-map("state", add=TRUE)
+plot(scoters,add=TRUE)
+tranbox<-make_bbox(lon=scoters$latitude_dd, lat = scoters$longitude_dd,
+                   f=.01)
+
+library(ggmap)
+
+map<-get_map(location=tranbox, maptype = "terrain", source = 'google',
+             color='color')
+mapscot<-data.frame(scoters)
+.factor(scoters)
+p1<-ggmap(map)+
+  geom_point(data=mapscot, aes(x=latitude_dd, y=longitude_dd,
+                              size=Count, shape=2))
+p1
+
+
+?get_map
+
+library(GISTools)
+library(RgoogleMaps)
+
+
 
 #dividing transects into grids
 #segmenting transects
