@@ -120,6 +120,9 @@ head(sco2)
 #negative binomial
 library(MASS)
 names(sco2)
+names(sedmob)
+sco2$sednum=sco2@data$substrate$SEDNUM
+sco2$sedmob2=sco2@data$sedmob$Year.1
 
 m1<-glm.nb(Count~bathy2, data=sco2)
 m1$aic
@@ -130,53 +133,127 @@ m2$aic
 m3<-glm.nb(Count~bathy2 + slope2, data=sco2)
 m3$aic
 
-m4<-glm.nb(Count~bathy2 + dist2 + slope2, data=sco2)
+m4<-glm.nb(Count~bathy2 + sco2$sednum, data = sco2)
 m4$aic
 
-m5<-glm.nb(Count~dist2, data=sco2)
+m5<-glm.nb(Count~bathy2 + sco2$sedmob2, data=sco2)
 m5$aic
 
-m6<-glm.nb(Count~dist2 + slope2, data=sco2)
+m6<-glm.nb(Count~bathy2 + dist2 + slope2, data=sco2)
 m6$aic
 
-m7<-glm.nb(Count~slope2, data=sco2)
+m7<-glm.nb(Count~bathy2 + dist2 + sco2$sedmob2, data=sco2)
 m7$aic
 
-names(sco2)
-names(substrate)
-m8<-glm.nb(Count~as.matrix(substrate), data = sco2)
+m8<-glm.nb(Count~bathy2 + dist2 + sco2$sednum, data=sco2)
+m8$aic
 
-summary(sco2)
+m9<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sedmob2, data=sco2)
+m9$aic
+
+m10<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum, data=sco2)
+m10$aic
+
+m11<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum +
+            sco2$sedmob2, data=sco2)
+m11$aic
+
+m12<-glm.nb(Count~bathy2 + slope2 + sco2$sedmob2, data=sco2)
+m12$aic
+
+m13<-glm.nb(Count~bathy2 + slope2 + sco2$sednum, data=sco2)
+m13$aic
+
+m14<-glm.nb(Count~bathy2 + slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
+m14$aic
+
+m15<-glm.nb(Count~bathy2 + sco2$sedmob2 + sco2$sednum, data=sco2)
+m15$aic
+
+m16<-glm.nb(Count~dist2, data=sco2)
+m16$aic
+
+m17<-glm.nb(Count~dist2 + slope2, data=sco2)
+m17$aic
+
+m18<-glm.nb(Count~dist2 + sco2$sedmob2, data=sco2)
+m18$aic
+
+m19<-glm.nb(Count~dist2 + sco2$sednum, data=sco2)
+m19$aic
+
+m20<-glm.nb(Count~dist2 + slope2 + sco2$sedmob2, data=sco2)
+m20$aic
+
+m21<-glm.nb(Count~dist2 + slope2 + sco2$sednum, data=sco2)
+m21$aic
+
+m22<-glm.nb(Count~dist2 + slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
+m22$aic
+
+m23<-glm.nb(Count~dist2 + sco2$sedmob2 + sco2$sednum, data=sco2)
+m23$aic
+
+m24<-glm.nb(Count~slope2, data=sco2)
+m24$aic
+
+m25<-glm.nb(Count~slope2 + sco2$sedmob2, data=sco2)
+m25$aic
+
+m26<-glm.nb(Count~slope2 + sco2$sednum, data=sco2)
+m26$aic
+
+m27<-glm.nb(Count~slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
+m27$aic
+
+m28<-glm.nb(Count~sco2$sedmob2, data=sco2)
+m28$aic
+
+m29<-glm.nb(Count~sco2$sedmob2 + sco2$sednum, data=sco2)
+m29$aic
+
+m30<-glm.nb(Count~sco2$sednum, data=sco2)
+m30$aic
+
+
+#predict based on top model
+topm=predict.glm(m10, sco2)
+plot(topm, type="l", lwd=1, xlab="year", ylab="count")
+names(topm)
+?predict.glm
+
 
 
 
 #transect data
-
-names(transect)
-transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
-proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
-map<-plot(transect)
-map<-map("state", add=TRUE)
-plot(scoters,add=TRUE)
-tranbox<-make_bbox(lon=scoters$latitude_dd, lat = scoters$longitude_dd,
-                   f=.01)
-
+library(GISTools)
+library(RgoogleMaps)
 library(ggmap)
+
+transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
+transect=data.frame(transect)
+proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
+
+scoters=read.csv("ObsData2.csv",header=TRUE)
+scoters <-na.omit(scoters)
+scoters<-data.frame(scoters)
+tranbox<-make_bbox(lon=scoters$longitude_dd, lat = scoters$latitude_dd,
+                   f=.01)
 
 map<-get_map(location=tranbox, maptype = "terrain", source = 'google',
              color='color')
-mapscot<-data.frame(scoters)
-.factor(scoters)
+
 p1<-ggmap(map)+
-  geom_point(data=mapscot, aes(x=latitude_dd, y=longitude_dd,
-                              size=Count, shape=2))
+  geom_line(data=transect, aes(x=1, y=1))+
+  geom_point(data = scoters, aes(scoters$longitude_dd, 
+                                 scoters$latitude_dd,
+                                 size=Count))
+
 p1
+ 
+?geom_line
 
 
-?get_map
-
-library(GISTools)
-library(RgoogleMaps)
 
 
 
