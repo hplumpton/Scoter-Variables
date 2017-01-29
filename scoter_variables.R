@@ -3,6 +3,7 @@ library(maps)
 library(raster)
 library(rgeos)
 library(maptools)
+library(ggplot2)
 
 #bathymetry
 
@@ -29,15 +30,19 @@ sco2$bathy=extract(bathy,sco3)
 #combined with scoters data
 sco2$bathy2=scale(sco2$bathy) 
 #standardize covariates for comparison of beta estimates later on
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> origin/master
 
 #substrate
 
 substrate=readShapePoly("Layers/substrate/conmapsg.shp")
 proj4string(substrate)<-CRS("+proj=longlat +datum=WGS84")
 
+<<<<<<< HEAD
 plot(substrate)
 
 plot(scoters,add=TRUE)
@@ -88,11 +93,37 @@ proj4string(dist)<-CRS("+proj=longlat +datum=WGS84")
 
 sco2$dist=extract(dist,sco2)
 #extract sediment mobility measure at each spatial location 
+=======
+scoters=read.csv("ObsData2.csv",header=TRUE)
+scoters <-na.omit(scoters)
+summary(scoters)
+
+coordinates(scoters)<-c("longitude_dd","latitude_dd") 
+#define x&y coordinates
+proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
+#assigning a projection
+plot(scoters,add=TRUE)
+
+sub<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
+#assigned same projection as bathy
+sco2=spTransform(scoters,CRS(proj4string(bathy))) 
+#assign same projection as bathy
+
+scotsubtr=SpatialPoints(sco2)
+scotsubtr<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
+proj4string(scotsubtr)<-CRS("+proj=longlat +datum=WGS84")
+
+sco2$substrate=extract(sub,scotsubtr)
+#extract substrate measure at each spatial laoction 
+>>>>>>> origin/master
 #combined with scoters data
 sco2$dist2=scale(sco2$dist)
 #standardize covariates for comparison of beta estimates later on
+<<<<<<< HEAD
 
 head(sco2)
+=======
+>>>>>>> origin/master
 
 #sediment mobility
 
@@ -105,14 +136,37 @@ plot(sedmobility)
 
 plot(scoters,add=TRUE)
 
+<<<<<<< HEAD
 sedmob<-spTransform(sedmobility, CRS(proj4string(bathy)))
 
 sco2$sedmob=extract(sedmob,sco2)
+=======
+scoters=read.csv("ObsData2.csv",header=TRUE)
+scoters <-na.omit(scoters)
+summary(scoters)
+
+coordinates(scoters)<-c("longitude_dd","latitude_dd") 
+#define x&y coordinates
+proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
+#assigning a projection
+plot(scoters,add=TRUE)
+
+sedmob<-spTransform(sedmobility, CRS("+proj=longlat +datum=WGS84"))
+#assigned same projection as bathy
+sco2=spTransform(scoters,CRS(proj4string(bathy))) 
+#assign same projection as bathy
+head(sedmobility)
+
+scotsedmob=SpatialPoints(sco2)
+proj4string(scotsedmob)<-CRS("+proj=longlat +datum=WGS84")
+sco2$sedmobility=extract(sedmob,scotsedmob)
+>>>>>>> origin/master
 #extract sediment mobility measure at each spatial location 
 #combined with scoters data
 sco2$sedmob2=scale(sco2$sedmob)
 #standardize covariates for comparison of beta estimates later on
 
+<<<<<<< HEAD
 head(sco2)
 
 
@@ -222,10 +276,49 @@ plot(topm, type="l", lwd=1, xlab="year", ylab="count")
 names(topm)
 ?predict.glm
 
+=======
+#ocean floor slope
+
+bathy=raster("Layers/etopo1 bathymetry.tif")
+image(bathy)
+summary(bathy)
+
+slope<-terrain(bathy, opt=c('slope'), unit='degrees')
+summary(slope)
+head(slope)
+
+scoters=read.csv("ObsData2.csv",header=TRUE)
+scoters <-na.omit(scoters)
+summary(scoters)
+
+coordinates(scoters)<-c("longitude_dd","latitude_dd") 
+#define x&y coordinates
+proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
+#assigning a projection
+plot(scoters,add=TRUE)
+
+sco2=spTransform(scoters,CRS(proj4string(bathy))) 
+#assign same projection as bathy
+
+scotslope=SpatialPoints(sco2)
+proj4string(scotslope)<-CRS("+proj=longlat +datum=WGS84")
+sco2$slope=extract(slope,scotslope)
+#extract sediment mobility measure at each spatial location 
+#combined with scoters data
+sco2$slope2=scale(sco2$slope)
+#standardize covariates for comparison of beta estimates later on
+
+#distance to shore
+
+shoreline=readShapePoly("Layers/shoreline/GSHHS_shp/i/GSHHS_i_L1.shp")
+proj4string(shoreline)<-CRS("+proj=longlat +datum=WGS84")
+plot(shoreline)
+>>>>>>> origin/master
 
 
 
 #transect data
+<<<<<<< HEAD
 library(GISTools)
 library(RgoogleMaps)
 library(ggmap)
@@ -447,10 +540,26 @@ temp=as.psp(sp.seg[sp.seg$id==1,])
 
 grid<-lines_to_strips(lines,as.owin(temp), width=250)
 plot(grid, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)
+=======
+
+transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
+proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
+plot(transect)
+map("state", add=TRUE)
+head(transect)
+
+#dividing transects into grids
+
+library(DSpat)
+strtransect<-lines_to_strips(transects, study.area ='transect', width=250)
+>>>>>>> origin/master
 
 
 
 #North Atlantic Oscillation
 #Fine Scale Weather
 #Bivalve Distribution
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/master
