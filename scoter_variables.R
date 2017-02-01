@@ -30,19 +30,13 @@ sco2$bathy=extract(bathy,sco3)
 #combined with scoters data
 sco2$bathy2=scale(sco2$bathy) 
 #standardize covariates for comparison of beta estimates later on
-<<<<<<< HEAD
 
-
-
-=======
->>>>>>> origin/master
 
 #substrate
 
 substrate=readShapePoly("Layers/substrate/conmapsg.shp")
 proj4string(substrate)<-CRS("+proj=longlat +datum=WGS84")
 
-<<<<<<< HEAD
 plot(substrate)
 
 plot(scoters,add=TRUE)
@@ -50,17 +44,16 @@ plot(scoters,add=TRUE)
 substrate<-spTransform(substrate,CRS(proj4string(bathy)))
 
 sco2$substrate=over(sco2,substrate)
+
 #extract substrate measure at each spatial location 
 #combined with scoters data
 
 
-head(sco2)
 
 #ocean floor slope
 
 
 slope<-terrain(bathy, opt=c('slope'), unit='degrees')
-summary(slope)
 
 plot(scoters,add=TRUE)
 
@@ -73,8 +66,7 @@ sco2$slope=extract(slope,scotslope)
 sco2$slope2=scale(sco2$slope)
 #standardize covariates for comparison of beta estimates later on
 
-head(sco2)
-summary(sco2)
+
 
 
 #distance to shore
@@ -93,37 +85,13 @@ proj4string(dist)<-CRS("+proj=longlat +datum=WGS84")
 
 sco2$dist=extract(dist,sco2)
 #extract sediment mobility measure at each spatial location 
-=======
-scoters=read.csv("ObsData2.csv",header=TRUE)
-scoters <-na.omit(scoters)
-summary(scoters)
 
-coordinates(scoters)<-c("longitude_dd","latitude_dd") 
-#define x&y coordinates
-proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
-#assigning a projection
-plot(scoters,add=TRUE)
-
-sub<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
-#assigned same projection as bathy
-sco2=spTransform(scoters,CRS(proj4string(bathy))) 
-#assign same projection as bathy
-
-scotsubtr=SpatialPoints(sco2)
-scotsubtr<- spTransform(substrate, CRS("+proj=longlat +datum=WGS84"))
-proj4string(scotsubtr)<-CRS("+proj=longlat +datum=WGS84")
-
-sco2$substrate=extract(sub,scotsubtr)
-#extract substrate measure at each spatial laoction 
->>>>>>> origin/master
-#combined with scoters data
 sco2$dist2=scale(sco2$dist)
 #standardize covariates for comparison of beta estimates later on
-<<<<<<< HEAD
 
-head(sco2)
-=======
->>>>>>> origin/master
+
+
+
 
 #sediment mobility
 
@@ -136,45 +104,24 @@ plot(sedmobility)
 
 plot(scoters,add=TRUE)
 
-<<<<<<< HEAD
+
 sedmob<-spTransform(sedmobility, CRS(proj4string(bathy)))
 
 sco2$sedmob=extract(sedmob,sco2)
-=======
-scoters=read.csv("ObsData2.csv",header=TRUE)
-scoters <-na.omit(scoters)
-summary(scoters)
-
-coordinates(scoters)<-c("longitude_dd","latitude_dd") 
-#define x&y coordinates
-proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
-#assigning a projection
-plot(scoters,add=TRUE)
-
-sedmob<-spTransform(sedmobility, CRS("+proj=longlat +datum=WGS84"))
-#assigned same projection as bathy
-sco2=spTransform(scoters,CRS(proj4string(bathy))) 
-#assign same projection as bathy
-head(sedmobility)
-
-scotsedmob=SpatialPoints(sco2)
-proj4string(scotsedmob)<-CRS("+proj=longlat +datum=WGS84")
-sco2$sedmobility=extract(sedmob,scotsedmob)
->>>>>>> origin/master
-#extract sediment mobility measure at each spatial location 
-#combined with scoters data
-sco2$sedmob2=scale(sco2$sedmob)
-#standardize covariates for comparison of beta estimates later on
-
-<<<<<<< HEAD
-head(sco2)
 
 
+#multicollinearity
+
+cor.test(sco2$bathy2,sco2$dist2)
+cor.test(sco2$bathy2,sco2$slope2)
+cor.test(sco2$bathy2,sco2$sednum)
+cor.test(sco2$dist2,sco2$slope2)
+cor.test(sco2$dist2,sco2$sednum)
+cor.test(sco2$slope2,sco2$sednum)
 
 #negative binomial
 library(MASS)
-names(sco2)
-names(sedmob)
+
 sco2$sednum=sco2@data$substrate$SEDNUM
 sco2$sedmob2=sco2@data$sedmob$Year.1
 
@@ -205,8 +152,35 @@ m8$aic
 m9<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sedmob2, data=sco2)
 m9$aic
 
-m10<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum, data=sco2)
+m10<-glm.nb(Count~dist2 + slope2 + sco2$sednum, data=sco2)
+summary(m10)
 m10$aic
+
+m10a<-glm.nb(Count~(dist2+I(dist2^2))+slope2+sco2$sednum,data=sco2)
+m10a$aic
+
+m10b<-glm.nb(Count~dist2+(slope2+I(slope2^2))+sco2$sednum,data=sco2)
+m10b$aic
+
+m10c<-glm.nb(Count~(bathy2+I(bathy2^2))+dist2+slope2+sco2$sednum,data=sco2)
+m10c$aic
+
+m10d<-glm.nb(Count~(dist2+I(dist2^2))+(slope2+I(slope2^2))+
+               sco2$sednum,data=sco2)
+m10d$aic
+summary(m10d)
+
+m10e<-glm.nb(Count~(bathy2+I(bathy2^2))+(dist2+I(dist2^2))+slope2+
+               sco2$sednum,data=sco2)
+m10e$aic
+
+m10f<-glm.nb(Count~(bathy2+I(bathy2^2))+dist2+(slope2+I(slope2^2))+
+               sco2$sednum,data=sco2)
+m10f$aic
+
+m10g<-glm.nb(Count~(bathy2+I(bathy2^2))+(dist2+I(dist2^2))+(slope2+I(slope2^2))+
+               sco2$sednum,data=sco2)
+m10g$aic
 
 m11<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum +
             sco2$sedmob2, data=sco2)
@@ -269,62 +243,65 @@ m29$aic
 m30<-glm.nb(Count~sco2$sednum, data=sco2)
 m30$aic
 
+#Delta AIC
 
-#predict based on top model
-topm=predict.glm(m10, sco2)
-plot(topm, type="l", lwd=1, xlab="year", ylab="count")
-names(topm)
-?predict.glm
+Table = AIC(m10, m10a, m10b, m10d)
+n = dim(sco2)[1]  #sample size
+# Table$df yields K, the number of parameters estimated in each model
+# Table$AIC yields the AIC value for each model
+AICc = Table$AIC + (2*Table$df*(Table$df+1))/(n-Table$df-1) #Calculate AICc from AIC, n, and K
+Table = cbind(Table,AICc)
+deltaAICc = Table$AICc - min(Table$AICc) #Calculates the delta AICc values
+Table = cbind(Table,deltaAICc)
+Table = Table[order(Table$AICc), ]
+Table
 
-=======
-#ocean floor slope
 
-bathy=raster("Layers/etopo1 bathymetry.tif")
-image(bathy)
-summary(bathy)
+#confidence intervals of top model
+data<-data.frame(read.csv('topmod.csv'))
+data$Mean<-as.numeric(data$Mean)
 
-slope<-terrain(bathy, opt=c('slope'), unit='degrees')
-summary(slope)
-head(slope)
+topmod<-ggplot(data, aes(Covariate, Mean))
 
-scoters=read.csv("ObsData2.csv",header=TRUE)
-scoters <-na.omit(scoters)
-summary(scoters)
+topmod+geom_point(aes(x=Covariate, y=Mean), size=2)+
+  geom_errorbar(mapping=aes(ymin=lower, ymax=upper), width=0.1)+
+  theme(panel.backgroun=element_rect(color='black', fill='white'))+
+  xlab("Covariate")+
+  ylab("Mean")
 
-coordinates(scoters)<-c("longitude_dd","latitude_dd") 
-#define x&y coordinates
-proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
-#assigning a projection
-plot(scoters,add=TRUE)
 
-sco2=spTransform(scoters,CRS(proj4string(bathy))) 
-#assign same projection as bathy
+#prediction of top model
+sco2=data.frame(sco2)
 
-scotslope=SpatialPoints(sco2)
-proj4string(scotslope)<-CRS("+proj=longlat +datum=WGS84")
-sco2$slope=extract(slope,scotslope)
-#extract sediment mobility measure at each spatial location 
-#combined with scoters data
-sco2$slope2=scale(sco2$slope)
-#standardize covariates for comparison of beta estimates later on
+sco2$sednum=sco2@data$substrate$SEDNUM
 
-#distance to shore
+newdat=data.frame(dist2=seq(min(sco2$dist2 + I(sco2$dist2^2)),
+                            max(sco2$dist2 + I(sco2$dist2^2)),length=100),
+                  slope2=seq(min(sco2$slope2 + I(sco2$slope2^2)),
+                             max(sco2$slope2 + I(sco2$slope2^2)),length=100),
+                  sednum=seq(min(sco2$sednum), max(sco2$sednum)))
 
-shoreline=readShapePoly("Layers/shoreline/GSHHS_shp/i/GSHHS_i_L1.shp")
-proj4string(shoreline)<-CRS("+proj=longlat +datum=WGS84")
-plot(shoreline)
->>>>>>> origin/master
+E.psi=predict(m10d,type=c("dist2","response"),newdata=newdat, 
+              na.action=na.omit)
+names(newdat)
+
+plot(E.psi$Predicted,x=newdat$dist2,type="l", lwd=, xlab = "Distance",
+     ylab = "Expected Occupancy",
+     cex.lab=1.3)
+summary(sco2)
+
+
 
 
 
 #transect data
-<<<<<<< HEAD
+
 library(GISTools)
 library(RgoogleMaps)
 library(ggmap)
 
 transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
-transect=data.frame(transect)
+
 proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
 
 scoters=read.csv("ObsData2.csv",header=TRUE)
@@ -337,12 +314,15 @@ map<-get_map(location=tranbox, maptype = "terrain", source = 'google',
              color='color')
 
 p1<-ggmap(map)+
-  geom_line(data=transect, aes(x=1, y=1))+
   geom_point(data = scoters, aes(scoters$longitude_dd, 
                                  scoters$latitude_dd,
-                                 size=Count))
+                                 size=Count)) +
+  scale_size_continuous(breaks = c(1, 1000, 2000, 3000, 4000, 5000))+
+  theme(legend.position=c(.85,.21))
+  
+p1+xlab("Longitude") +
+  ylab("Latitude")
 
-p1
  
 ?geom_line
 
@@ -350,216 +330,8 @@ p1
 
 
 
-#dividing transects into grids
-#segmenting transects
-
-library(DSpat)
-library(GISTools)
-library(spatstat)
-
-tran2=spTransform(transect,
-                  CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
-tran.sub=tran2[!duplicated(tran2$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,544) #add a unique ID to each transect
-
-#this just uses transect 1 as an example
-x0=coordinates(tran.sub)[[1]][[1]][1,1]
-x1=coordinates(tran.sub)[[1]][[1]][90,1]
-y0=coordinates(tran.sub)[[1]][[1]][1,2]
-y1=coordinates(tran.sub)[[1]][[1]][90,2]
-
-lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
-
-tmp=as.psp(tran.sub[tran.sub$id==1,])
-
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
-plot(tran.sub[tran.sub$id==1,])
-points(strtransect$full.transects[[1]]) #not subdividing transects still
-
-## functions below taken from http://rstudio-pubs-static.s3.amazonaws.com/10685_1f7266d60db7432486517a111c76ac8b.html
-
-#First, basic segmentation
-CreateSegment <- function(coords, from, to) {
-  distance <- 0
-  coordsOut <- c()
-  biggerThanFrom <- F
-  for (i in 1:(nrow(coords) - 1)) {
-    d <- sqrt((coords[i, 1] - coords[i + 1, 1])^2 + (coords[i, 2] - coords[i + 
-                                                                             1, 2])^2)
-    distance <- distance + d
-    if (!biggerThanFrom && (distance > from)) {
-      w <- 1 - (distance - from)/d
-      x <- coords[i, 1] + w * (coords[i + 1, 1] - coords[i, 1])
-      y <- coords[i, 2] + w * (coords[i + 1, 2] - coords[i, 2])
-      coordsOut <- rbind(coordsOut, c(x, y))
-      biggerThanFrom <- T
-    }
-    if (biggerThanFrom) {
-      if (distance > to) {
-        w <- 1 - (distance - to)/d
-        x <- coords[i, 1] + w * (coords[i + 1, 1] - coords[i, 1])
-        y <- coords[i, 2] + w * (coords[i + 1, 2] - coords[i, 2])
-        coordsOut <- rbind(coordsOut, c(x, y))
-        break
-      }
-      coordsOut <- rbind(coordsOut, c(coords[i + 1, 1], coords[i + 1, 
-                                                               2]))
-    }
-  }
-  return(coordsOut)
-}
-
-#now create multiple segments building on last function
-CreateSegments <- function(coords, length = 0, n.parts = 0) {
-  stopifnot((length > 0 || n.parts > 0))
-  # calculate total length line
-  total_length <- 0
-  for (i in 1:(nrow(coords) - 1)) {
-    d <- sqrt((coords[i, 1] - coords[i + 1, 1])^2 + (coords[i, 2] - coords[i + 
-                                                                             1, 2])^2)
-    total_length <- total_length + d
-  }
-  
-  # calculate stationing of segments
-  if (length > 0) {
-    stationing <- c(seq(from = 0, to = total_length, by = length), total_length)
-  } else {
-    stationing <- c(seq(from = 0, to = total_length, length.out = n.parts), 
-                    total_length)
-  }
-  
-  # calculate segments and store in list
-  newlines <- list()
-  for (i in 1:(length(stationing) - 1)) {
-    newlines[[i]] <- CreateSegment(coords, stationing[i], stationing[i + 
-                                                                       1])
-  }
-  return(newlines)
-}
-
-#extract x and y locations of segments for functions above. Example with transect 1
-transect.locs=coordinates(tran.sub)[[1]][[1]]
-
-#length in m -- update segment length to relevant length for analysis
-segs = CreateSegments(transect.locs,length=1000)
-
-plot(tran.sub[tran.sub$id==1,])
-col = "red"
-for (i in 1:length(segs)) {
-  col <- ifelse(col == "red", "black", "red")
-  lines(as.matrix(segs[[i]]), col = col, lwd = 2)
-}
-
-MergeLast <- function(lst) {
-  l <- length(lst)
-  lst[[l - 1]] <- rbind(lst[[l - 1]], lst[[l]])
-  lst <- lst[1:(l - 1)]
-  return(lst)
-}
-
-#translate above to SpatialLines structure
-SegmentSpatialLines <- function(sl, length = 0, n.parts = 0, merge.last = FALSE) {
-  stopifnot((length > 0 || n.parts > 0))
-  id <- 0
-  newlines <- list()
-  sl <- as(sl, "SpatialLines")
-  for (lines in sl@lines) {
-    for (line in lines@Lines) {
-      crds <- line@coords
-      # create segments
-      segments <- CreateSegments(coords = crds, length, n.parts)
-      if (merge.last && length(segments) > 1) {
-        # in case there is only one segment, merging would result into error
-        segments <- MergeLast(segments)
-      }
-      # transform segments to lineslist for SpatialLines object
-      for (segment in segments) {
-        newlines <- c(newlines, Lines(list(Line(unlist(segment))), ID = as.character(id)))
-        id <- id + 1
-      }
-    }
-  }
-  return(SpatialLines(newlines))
-}
-
-#example above with transect 2 added
-tran2=coordinates(tran.sub)[[2]][[1]]
-
-#transects 1 & 2 as spatial lines
-sl <- SpatialLines(list(Lines(list(Line(coords = transect.locs)), 
-                              ID = "1"), Lines(list(Line(coords = tran2)),ID = "2")))
-
-#segmenting spatial lines objects
-sl2 <- SegmentSpatialLines(sl, length = 1000, merge.last = TRUE)
-
-# plot
-plot(sl2, col = rep(c(1, 2), length.out = length(sl2)), axes = T)
-
-#now create a for loop to convert all transects to Lines objects
-ntransect=length(unique(tran.sub$id))
-new.line=list(Line(coords=transect.locs))
-new.lines=list(Lines(new.line,ID=1))
-for(i in 2:ntransect){
-  new.line=list(Line(coords=coordinates(tran.sub)[[i]][[1]]))
-  new.lines[[i]]=Lines(new.line,ID=i)
-}
-
-sp.out=SpatialLines(new.lines,CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
-#segment all transects
-sp.seg <- SegmentSpatialLines(sp.out, length = 1000, merge.last = TRUE)
-plot(sp.seg, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)
-
-
-
-
-
-#gridding transects
-
-x0=coordinates(sp.seg)[[1]][[1]][1,1]
-x1=coordinates(sp.seg)[[1]][[1]][1,1]
-y0=coordinates(sp.seg)[[1]][[1]][1,2]
-y1=coordinates(sp.seg)[[1]][[1]][1,2]
-
-lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
-
-
-tran.locs=coordinates(sp.seg)[[1]][[1]]
-tran2=coordinates(sp.seg)[[2]][[1]]
-sp.seg$id=seq(1,18453) #add a unique ID to each transect
-
-sl <- SpatialLines(list(Lines(list(Line(coords = tran.locs)), 
-                              ID = "1"), Lines(list(Line(coords = tran2)),ID = "2")))
-
-
-sp.seg=SpatialLines(new.lines,CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
-
-names(sp.seg)
-summary(sp.seg)
-
-temp=as.psp(sp.seg[sp.seg$id==1,])
-
-grid<-lines_to_strips(lines,as.owin(temp), width=250)
-plot(grid, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)
-=======
-
-transect=readShapeLines("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
-proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
-plot(transect)
-map("state", add=TRUE)
-head(transect)
-
-#dividing transects into grids
-
-library(DSpat)
-strtransect<-lines_to_strips(transects, study.area ='transect', width=250)
->>>>>>> origin/master
-
-
 
 #North Atlantic Oscillation
 #Fine Scale Weather
 #Bivalve Distribution
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/master
