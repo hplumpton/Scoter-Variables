@@ -8,7 +8,6 @@ library(ggplot2)
 #bathymetry
 
 bathy=raster("Layers/etopo1 bathymetry.tif")
-image(bathy)
 
 scoters=read.csv("ObsData2.csv",header=TRUE)
 scoters <-na.omit(scoters)
@@ -17,19 +16,13 @@ coordinates(scoters)<-c("longitude_dd","latitude_dd")
 #define x&y coordinates
 proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
 #assigning a projection
-plot(scoters,add=TRUE)
 
 sco2=spTransform(scoters,CRS(proj4string(bathy))) 
 #assign same projection as bathy
-map("state", add=TRUE)
 
 sco3=SpatialPoints(sco2) 
 #extract function didn't like SpatialPointsDataFrame
-sco2$bathy=extract(bathy,sco3) 
-#extract bathymetry measure at each spatial location 
-#combined with scoters data
-sco2$bathy2=scale(sco2$bathy) 
-#standardize covariates for comparison of beta estimates later on
+
 
 
 #substrate
@@ -271,24 +264,24 @@ topmod+geom_point(aes(x=Covariate, y=Mean), size=2)+
 
 
 #prediction of top model
-sco2=data.frame(sco2)
-
-sco2$sednum=sco2@data$substrate$SEDNUM
 
 newdat=data.frame(dist2=seq(min(sco2$dist2 + I(sco2$dist2^2)),
-                            max(sco2$dist2 + I(sco2$dist2^2)),length=100),
+                            max(sco2$dist2 + I(sco2$dist2^2)),length=1116),
                   slope2=seq(min(sco2$slope2 + I(sco2$slope2^2)),
-                             max(sco2$slope2 + I(sco2$slope2^2)),length=100),
-                  sednum=seq(min(sco2$sednum), max(sco2$sednum)))
+                             max(sco2$slope2 + I(sco2$slope2^2)),length=1116),
+                  sednum=seq(min(sco2$sednum), max(sco2$sednum),length=1116))
 
-E.psi=predict(m10d,type=c("dist2","response"),newdata=newdat, 
-              na.action=na.omit)
 names(newdat)
 
-plot(E.psi$Predicted,x=newdat$dist2,type="l", lwd=, xlab = "Distance",
-     ylab = "Expected Occupancy",
-     cex.lab=1.3)
-summary(sco2)
+dis2shore=predict(m10d,type=c("dist2","response"),newdata=newdat, 
+              na.action=na.omit)
+
+dis2shore=predict(m10d, type="response", newdata=newdat, 
+                  na.action=na.omit)
+
+plot(dis2shore$Predicted,x=newdat$dist2,type="l", lwd=1, xlab = "Distance",
+     ylab = "Expected Occupancy", cex.lab=1.3)
+
 
 
 
