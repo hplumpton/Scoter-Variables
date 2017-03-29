@@ -55,7 +55,6 @@ sco2$slope2=scale(sco2$slope)
 sco2$slope2=as.numeric(scale(sco2$slope))
 
 
-
 #distance to shore
 
 shoreline=readShapePoly("Layers/shoreline/GSHHS_shp/i/GSHHS_i_L1.shp")
@@ -76,8 +75,6 @@ sco2$dist2=scale(sco2$dist)
 
 sco2$dist2=as.numeric(scale(sco2$dist)) 
 #You'll need to add as.numeric here too
-
-
 
 
 #sediment mobility
@@ -144,7 +141,6 @@ m10b$aic
 
 m10d<-glm.nb(Count~poly(dist2,2)+ poly(slope2,2)+sednum,data=sco2)
 m10d$aic
-summary(m10d)
 
 #m10e<-glm.nb(Count~(bathy2+I(bathy2^2))+(dist2+I(dist2^2))+slope2+
 #               sco2$sednum,data=sco2)
@@ -214,36 +210,36 @@ Table
 library(MuMIn)
 out.put<-model.sel(m10,m10a,m10b,m10d)
 out.put
-
+summary(m10d)
 
 #prediction of top model
 
 
-slope2=seq(min(sco2$slope2), max(sco2$slope2),length=1116)
+#slope2=seq(min(sco2$slope2), max(sco2$slope2),length=1116)
 
-oceanslope=predict(m10d,
-                  data.frame(slope2=seq(min(sco2$slope2), 
-                                        max(sco2$slope2),length=1116),
-                             dist2=as.numeric(rep(0,1116)),
-                             sednum=as.factor(rep(4,1116))),
-                  type="response")
+#oceanslope=predict(m10d,
+#                  data.frame(slope2=seq(min(sco2$slope2), 
+#                                       max(sco2$slope2),length=1116),
+#                             dist2=as.numeric(rep(0,1116)),
+#                             sednum=as.factor(rep(4,1116))),
+#                  type="response")
 
-plot(y=oceanslope,x=seq(min(sco2$slope2),max(sco2$slope2),length=1116),
-     type="l", lwd=1, xlab = "Ocean Floor Slope",
-     ylab = "Expected Count", cex.lab=1.3)
+#plot(y=oceanslope,x=seq(min(sco2$slope2),max(sco2$slope2),length=1116),
+#     type="l", lwd=1, xlab = "Ocean Floor Slope",
+#     ylab = "Expected Count", cex.lab=1.3)
 
-dist2=seq(min(sco2$dist2), max(sco2$dist2), length=1116)
+#dist2=seq(min(sco2$dist2), max(sco2$dist2), length=1116)
 
-dist2shore=predict(m10d,
-                   data.frame(dist2=seq(min(sco2$dist2), 
-                                         max(sco2$dist2),length=1116),
-                              slope2=as.numeric(rep(0,1116)),
-                              sednum=as.factor(rep(4,1116))),
-                   type="response")
+#dist2shore=predict(m10d,
+#                   data.frame(dist2=seq(min(sco2$dist2), 
+#                                         max(sco2$dist2),length=1116),
+#                              slope2=as.numeric(rep(0,1116)),
+#                              sednum=as.factor(rep(4,1116))),
+#                   type="response")
 
-plot(y=dist2shore,x=seq(min(sco2$dist2),max(sco2$dist2),length=1116),
-     type="l", lwd=1, xlab = "Distance to Shore",
-     ylab = "Expected Count", cex.lab=1.3)
+#plot(y=dist2shore,x=seq(min(sco2$dist2),max(sco2$dist2),length=1116),
+#     type="l", lwd=1, xlab = "Distance to Shore",
+#     ylab = "Expected Count", cex.lab=1.3)
 
 
 #transect data
@@ -277,21 +273,26 @@ p+geom_point(data = scoters, aes(scoters$longitude_dd,
   xlab("Longitude") +
   ylab("Latitude")
 
-
-
-m10d<-na.action(na.omit(m10d))
-sco2<-na.action(na.omit(sco2))
+#Plotting top model variables (fitted values)
+m10d<-na.omit(m10d)
 sco2<-data.frame(sco2)
+sco2<-na.omit(sco2)
+
 
 sco2$fit<-fitted(m10d)
-distance<-ggplot(sco2, aes(x=dist2, y=fit))
-distance+geom_point()
+distance<-ggplot(sco2, aes(x=dist, y=fit))
+distance+geom_point() #x-axis is in meters
 
+floorslope<-ggplot(sco2, aes(x=slope, y=fit))
+floorslope+geom_point() #x-axis is in degrees
 
-
+#Bivalve Distribution
+bival1=substrate=readShapePoly("Layers/NCarolina_2016_GDB/LAYER FILES/INVERTEBRATE POLYS.lyr")
 
 
 #North Atlantic Oscillation
 #Fine Scale Weather
-#Bivalve Distribution
 
+
+#Home range: kernel density (adehabitatHR) function getvolumeUD, h=LSCV
+#
