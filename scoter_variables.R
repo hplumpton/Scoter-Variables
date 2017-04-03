@@ -11,18 +11,21 @@ bathy=raster("Layers/etopo1 bathymetry.tif")
 
 scoters=read.csv("ObsData2.csv",header=TRUE)
 scoters <-na.omit(scoters)
+image(bathy)
 
 coordinates(scoters)<-c("longitude_dd","latitude_dd") 
 #define x&y coordinates
 proj4string(scoters)<-CRS("+proj=longlat +datum=WGS84") 
 #assigning a projection
-
+plot(scoters, add=TRUE)
 sco2=spTransform(scoters,CRS(proj4string(bathy))) 
 #assign same projection as bathy
 
 #sco3=SpatialPoints(sco2) 
 #extract function didn't like SpatialPointsDataFrame
-
+#sco2$bathy=ectract(bathy,sco3)
+#sco2$bathy2=scale(sco2$bathy)
+#sco2$bathy2=as.numeric(sco2$bathy)
 
 
 #substrate
@@ -90,6 +93,22 @@ sco2$dist2=as.numeric(scale(sco2$dist))
 #co2$sedmob=extract(sedmob,sco2)
 #summary(sco2)
 
+#North Atlantic Oscillation
+sco2$NAO2=scale(sco2$NAO)
+sco2$NAO2=as.factor(sco2$NAO)
+
+#Bivalve Distribution
+bival1=readShapePoly("Layers/NCarolina_2016_GDB/LAYER FILES/INVERTEBRATE POLYS.lyr")
+
+
+#Fine Scale Weather
+wind=readShapePoly("Layers/Wind/secoora__wind_speed.m_s-1__latest.shp")
+plot(wind)
+proj4string(wind)<-CRS("+proj=longlat +datum=WGS84")
+wind<-spTransform(wind,CRS(proj4string(bathy)))
+
+
+
 
 
 #multicollinearity
@@ -100,6 +119,9 @@ sco2$dist2=as.numeric(scale(sco2$dist))
 cor.test(sco2$dist2,sco2$slope2)
 cor.test(sco2$dist2,sco2$sednum)
 cor.test(sco2$slope2,sco2$sednum)
+#cor.test(sco2$bathy2,sco2$NAO2)
+cor.test(sco2$dist2,sco2$NAO2)
+cor.test(sco2$slope2,sco2$NAO2)
 
 #negative binomial
 library(MASS)
@@ -136,19 +158,21 @@ m10a$aic
 m10b<-glm.nb(Count~dist2+poly(slope2,2)+sco2$sednum,data=sco2)
 m10b$aic
 
-#m10c<-glm.nb(Count~(bathy2+I(bathy2^2))+dist2+slope2+sco2$sednum,data=sco2)
+#m10c<-glm.nb(Count~poly(bathy2,2)+dist2+slope2+sco2$sednum,data=sco2)
 #m10c$aic
 
 m10d<-glm.nb(Count~poly(dist2,2)+ poly(slope2,2)+sednum,data=sco2)
 m10d$aic
+#added NAO2 to see AIC w/o its 7514.939 with its 7424.542
+#also the deltaAIC b/w with NAO and 10a was 93.48
 
-#m10e<-glm.nb(Count~(bathy2+I(bathy2^2))+(dist2+I(dist2^2))+slope2+
+#m10e<-glm.nb(Count~poly(bathy2,2)+poly(dist2,2)+slope2+
 #               sco2$sednum,data=sco2)
 #m10e$aic
-#m10f<-glm.nb(Count~(bathy2+I(bathy2^2))+dist2+(slope2+I(slope2^2))+
+#m10f<-glm.nb(Count~poly(bathy2,2)+dist2+poly(slope2,2)+
 #               sco2$sednum,data=sco2)
 #m10f$aic
-#m10g<-glm.nb(Count~(bathy2+I(bathy2^2))+(dist2+I(dist2^2))+(slope2+I(slope2^2))+
+#m10g<-glm.nb(Count~poly(bathy2,2)+poly(dist2,2)+poly(slope2,2)+
 #               sco2$sednum,data=sco2)
 #m10g$aic
 #m11<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum +
@@ -192,25 +216,59 @@ m26$aic
 #m29$aic
 m30<-glm.nb(Count~sco2$sednum, data=sco2)
 m30$aic
+m31<-glm.nb(Count~NAO2, data=sco2)
+m31$aic
+m32<-glm.nb(Count~dist2+NAO2, data=sco2)
+m32$aic
+m33<-glm.nb(Count~slope2+NAO2, data=sco2)
+m33$aic
+m34<-glm.nb(Count~sco2$sednum+NAO2, data=sco2)
+m34$aic
+m35<-glm.nb(Count~dist2+slope2+NAO2, data=sco2)
+m35$aic
+m36<-glm.nb(Count~dist2+sco2$sednum+NAO2, data=sco2)
+m36$aic
+m36a<-glm.nb(Count~poly(dist2,2)+sco2$sednum+NAO2, data=sco2)
+m36a$aic
+m37<-glm.nb(Count~slope2+sco2$sednum+NAO2, data=sco2)
+m37$aic
+m38<-glm.nb(Count~dist2+slope2+sco2$sednum+NAO2, data=sco2)
+m38$aic
+#m39<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum + NAO2, data=sco2)
+#m39$aic
+#m40<-glm.nb(Count~bathy2 + slope2 + sco2$sednum + NAO2, data=sco2)
+#m40$aic
+#m41<-glm.nb(Count~bathy2 + dist2 + sco2$sednum + NAO2, data=sco2)
+#m41$aic
+#m42<-glm.nb(Count~bathy2 + dist2 + slope2 + NAO2, data=sco2)
+#m42$aic
+#m43<-glm.nb(Count~bathy2 + dist2 + NAO2, data=sco2)
+#m43$aic
+#m44<-glm.nb(Count~bathy2 + slope2 + NAO2, data=sco2)
+#m44$aic
+#m45<-glm.nb(Count~bathy2 + sco2$sednum + NAO2, data=sco2)
+#m45$aic
+#m46<-glm.nb(Count~bathy2 + NAO2, data=sco2)
+#m46$aic
 
 #Delta AIC
 
-Table = AIC(m10, m10a, m10b, m10d)
-n = dim(sco2)[1]  #sample size
+#Table = AIC(m10, m10a, m10b, m10d)
+#n = dim(sco2)[1]  #sample size
 # Table$df yields K, the number of parameters estimated in each model
 # Table$AIC yields the AIC value for each model
-AICc = Table$AIC + (2*Table$df*(Table$df+1))/(n-Table$df-1) #Calculate AICc from AIC, n, and K
-Table = cbind(Table,AICc)
-deltaAICc = Table$AICc - min(Table$AICc) #Calculates the delta AICc values
-Table = cbind(Table,deltaAICc)
-Table = Table[order(Table$AICc), ]
-Table
+#AICc = Table$AIC + (2*Table$df*(Table$df+1))/(n-Table$df-1) #Calculate AICc from AIC, n, and K
+#Table = cbind(Table,AICc)
+#deltaAICc = Table$AICc - min(Table$AICc) #Calculates the delta AICc values
+#Table = cbind(Table,deltaAICc)
+#Table = Table[order(Table$AICc), ]
+#Table
 
 #Weighted AIC
 library(MuMIn)
-out.put<-model.sel(m10,m10a,m10b,m10d)
+out.put<-model.sel(m10,m10a,m10b,m10d,m36, m36a, m35)
 out.put
-summary(m10d)
+summary(m36a)
 
 #prediction of top model
 
@@ -274,24 +332,18 @@ p+geom_point(data = scoters, aes(scoters$longitude_dd,
   ylab("Latitude")
 
 #Plotting top model variables (fitted values)
-m10d<-na.omit(m10d)
+m10d<-na.omit(m36a)
 sco2<-data.frame(sco2)
 sco2<-na.omit(sco2)
 
 
-sco2$fit<-fitted(m10d)
+
+sco2$fit<-fitted(m36a)
 distance<-ggplot(sco2, aes(x=dist, y=fit))
 distance+geom_point() #x-axis is in meters
 
-floorslope<-ggplot(sco2, aes(x=slope, y=fit))
+floorslope<-ggplot(sco2, aes(x=NAO, y=fit))
 floorslope+geom_point() #x-axis is in degrees
-
-#Bivalve Distribution
-bival1=substrate=readShapePoly("Layers/NCarolina_2016_GDB/LAYER FILES/INVERTEBRATE POLYS.lyr")
-
-
-#North Atlantic Oscillation
-#Fine Scale Weather
 
 
 #Home range: kernel density (adehabitatHR) function getvolumeUD, h=LSCV
