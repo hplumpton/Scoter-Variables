@@ -21,11 +21,11 @@ plot(scoters, add=TRUE)
 sco2=spTransform(scoters,CRS(proj4string(bathy))) 
 #assign same projection as bathy
 
-#sco3=SpatialPoints(sco2) 
+sco3=SpatialPoints(sco2) 
 #extract function didn't like SpatialPointsDataFrame
-#sco2$bathy=ectract(bathy,sco3)
-#sco2$bathy2=scale(sco2$bathy)
-#sco2$bathy2=as.numeric(sco2$bathy)
+sco2$bathy=extract(bathy,sco3)
+sco2$bathy2=scale(sco2$bathy)
+sco2$bathy2=as.numeric(sco2$bathy)
 
 
 #substrate
@@ -95,17 +95,14 @@ sco2$dist2=as.numeric(scale(sco2$dist))
 
 #North Atlantic Oscillation
 sco2$NAO2=scale(sco2$NAO)
-sco2$NAO2=as.factor(sco2$NAO)
+
 
 #Bivalve Distribution
 bival1=readShapePoly("Layers/NCarolina_2016_GDB/LAYER FILES/INVERTEBRATE POLYS.lyr")
 
 
 #Fine Scale Weather
-wind=readShapePoly("Layers/Wind/secoora__wind_speed.m_s-1__latest.shp")
-plot(wind)
-proj4string(wind)<-CRS("+proj=longlat +datum=WGS84")
-wind<-spTransform(wind,CRS(proj4string(bathy)))
+
 
 
 
@@ -113,13 +110,13 @@ wind<-spTransform(wind,CRS(proj4string(bathy)))
 
 #multicollinearity
 
-#cor.test(sco2$bathy2,sco2$dist2)
-#cor.test(sco2$bathy2,sco2$slope2)
-#cor.test(sco2$bathy2,sco2$sednum)
+cor.test(sco2$bathy2,sco2$dist2)
+cor.test(sco2$bathy2,sco2$slope2)
+cor.test(sco2$bathy2,sco2$sednum)
 cor.test(sco2$dist2,sco2$slope2)
 cor.test(sco2$dist2,sco2$sednum)
 cor.test(sco2$slope2,sco2$sednum)
-#cor.test(sco2$bathy2,sco2$NAO2)
+cor.test(sco2$bathy2,sco2$NAO2)
 cor.test(sco2$dist2,sco2$NAO2)
 cor.test(sco2$slope2,sco2$NAO2)
 
@@ -127,9 +124,12 @@ cor.test(sco2$slope2,sco2$NAO2)
 library(MASS)
 
 sco2$sednum=as.factor(sco2@data$substrate$SEDNUM)
+sco2$NAO2=as.factor(sco2$NAO)
 sco2$slopesq=sco2$slope^2
 sco2$distsq=sco2$dist^2
 
+m0<-glm.nb(Count~1,data=sco2)
+m0$aic
 #m1<-glm.nb(Count~bathy2, data=sco2)
 #m1$aic
 #m2<-glm.nb(Count~bathy2 + dist2, data=sco2)
@@ -148,33 +148,25 @@ sco2$distsq=sco2$dist^2
 #m8$aic
 #m9<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sedmob2, data=sco2)
 #m9$aic
-m10<-glm.nb(Count~dist2 + slope2 + sco2$sednum, data=sco2)
-summary(m10)
-m10$aic
-
-m10a<-glm.nb(Count~poly(dist2,2)+slope2+sco2$sednum,data=sco2)
-m10a$aic
-
-m10b<-glm.nb(Count~dist2+poly(slope2,2)+sco2$sednum,data=sco2)
-m10b$aic
-
+#m10<-glm.nb(Count~dist2 + slope2 + sco2$sednum, data=sco2)
+#m10$aic
+#m10a<-glm.nb(Count~poly(dist2,2)+slope2+sco2$sednum,data=sco2)
+#m10a$aic
+#m10b<-glm.nb(Count~dist2+poly(slope2,2)+sco2$sednum,data=sco2)
+#m10b$aic
 #m10c<-glm.nb(Count~poly(bathy2,2)+dist2+slope2+sco2$sednum,data=sco2)
 #m10c$aic
-
 m10d<-glm.nb(Count~poly(dist2,2)+ poly(slope2,2)+sednum,data=sco2)
 m10d$aic
-#added NAO2 to see AIC w/o its 7514.939 with its 7424.542
-#also the deltaAIC b/w with NAO and 10a was 93.48
-
-#m10e<-glm.nb(Count~poly(bathy2,2)+poly(dist2,2)+slope2+
-#               sco2$sednum,data=sco2)
-#m10e$aic
-#m10f<-glm.nb(Count~poly(bathy2,2)+dist2+poly(slope2,2)+
-#               sco2$sednum,data=sco2)
-#m10f$aic
-#m10g<-glm.nb(Count~poly(bathy2,2)+poly(dist2,2)+poly(slope2,2)+
-#               sco2$sednum,data=sco2)
-#m10g$aic
+m10e<-glm.nb(Count~poly(bathy2,2)+poly(dist2,2)+slope2+
+               sco2$sednum,data=sco2)
+m10e$aic
+m10f<-glm.nb(Count~poly(bathy2,2)+dist2+poly(slope2,2)+
+               sco2$sednum,data=sco2)
+m10f$aic
+m10g<-glm.nb(Count~poly(bathy2,2)+poly(dist2,2)+poly(slope2,2)+
+               sco2$sednum,data=sco2)
+m10g$aic
 #m11<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum +
 #            sco2$sedmob2, data=sco2)
 #m11$aic
@@ -186,54 +178,54 @@ m10d$aic
 #m14$aic
 #m15<-glm.nb(Count~bathy2 + sco2$sedmob2 + sco2$sednum, data=sco2)
 #m15$aic
-m16<-glm.nb(Count~dist2, data=sco2)
-m16$aic
-m17<-glm.nb(Count~dist2 + slope2, data=sco2)
-m17$aic
+#m16<-glm.nb(Count~dist2, data=sco2)
+#m16$aic
+#m17<-glm.nb(Count~dist2 + slope2, data=sco2)
+#m17$aic
 #m18<-glm.nb(Count~dist2 + sco2$sedmob2, data=sco2)
 #m18$aic
-m19<-glm.nb(Count~dist2 + sco2$sednum, data=sco2)
-m19$aic
+#m19<-glm.nb(Count~dist2 + sco2$sednum, data=sco2)
+#m19$aic
 #m20<-glm.nb(Count~dist2 + slope2 + sco2$sedmob2, data=sco2)
 #m20$aic
-m21<-glm.nb(Count~dist2 + slope2 + sco2$sednum, data=sco2)
-m21$aic
+#m21<-glm.nb(Count~dist2 + slope2 + sco2$sednum, data=sco2)
+#m21$aic
 #m22<-glm.nb(Count~dist2 + slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
 #m22$aic
 #m23<-glm.nb(Count~dist2 + sco2$sedmob2 + sco2$sednum, data=sco2)
 #m23$aic
-m24<-glm.nb(Count~slope2, data=sco2)
-m24$aic
+#m24<-glm.nb(Count~slope2, data=sco2)
+#m24$aic
 #m25<-glm.nb(Count~slope2 + sco2$sedmob2, data=sco2)
 #m25$aic
-m26<-glm.nb(Count~slope2 + sco2$sednum, data=sco2)
-m26$aic
+#m26<-glm.nb(Count~slope2 + sco2$sednum, data=sco2)
+#m26$aic
 #m27<-glm.nb(Count~slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
 #m27$aic
 #m28<-glm.nb(Count~sco2$sedmob2, data=sco2)
 #m28$aic
 #m29<-glm.nb(Count~sco2$sedmob2 + sco2$sednum, data=sco2)
 #m29$aic
-m30<-glm.nb(Count~sco2$sednum, data=sco2)
-m30$aic
-m31<-glm.nb(Count~NAO2, data=sco2)
-m31$aic
-m32<-glm.nb(Count~dist2+NAO2, data=sco2)
-m32$aic
-m33<-glm.nb(Count~slope2+NAO2, data=sco2)
-m33$aic
-m34<-glm.nb(Count~sco2$sednum+NAO2, data=sco2)
-m34$aic
-m35<-glm.nb(Count~dist2+slope2+NAO2, data=sco2)
-m35$aic
-m36<-glm.nb(Count~dist2+sco2$sednum+NAO2, data=sco2)
-m36$aic
+#m30<-glm.nb(Count~sco2$sednum, data=sco2)
+#m30$aic
+#m31<-glm.nb(Count~NAO2, data=sco2)
+#m31$aic
+#m32<-glm.nb(Count~dist2+NAO2, data=sco2)
+#m32$aic
+#m33<-glm.nb(Count~slope2+NAO2, data=sco2)
+#m33$aic
+#m34<-glm.nb(Count~sco2$sednum+NAO2, data=sco2)
+#m34$aic
+#m35<-glm.nb(Count~dist2+slope2+NAO2, data=sco2)
+#m35$aic
+#m36<-glm.nb(Count~dist2+sco2$sednum+NAO2, data=sco2)
+#m36$aic
 m36a<-glm.nb(Count~poly(dist2,2)+sco2$sednum+NAO2, data=sco2)
 m36a$aic
-m37<-glm.nb(Count~slope2+sco2$sednum+NAO2, data=sco2)
-m37$aic
-m38<-glm.nb(Count~dist2+slope2+sco2$sednum+NAO2, data=sco2)
-m38$aic
+#m37<-glm.nb(Count~slope2+sco2$sednum+NAO2, data=sco2)
+#m37$aic
+#m38<-glm.nb(Count~dist2+slope2+sco2$sednum+NAO2, data=sco2)
+#m38$aic
 #m39<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum + NAO2, data=sco2)
 #m39$aic
 #m40<-glm.nb(Count~bathy2 + slope2 + sco2$sednum + NAO2, data=sco2)
@@ -248,6 +240,8 @@ m38$aic
 #m44$aic
 #m45<-glm.nb(Count~bathy2 + sco2$sednum + NAO2, data=sco2)
 #m45$aic
+#m45a<-glm.nb(Count~poly(bathy2,2) + sco2$sednum + NAO2, data=sco2)
+#m45a$aic
 #m46<-glm.nb(Count~bathy2 + NAO2, data=sco2)
 #m46$aic
 
@@ -266,7 +260,7 @@ m38$aic
 
 #Weighted AIC
 library(MuMIn)
-out.put<-model.sel(m10,m10a,m10b,m10d,m36, m36a, m35)
+out.put<-model.sel(m0,m10e,m10f,m10g,m36a)
 out.put
 summary(m36a)
 
@@ -332,7 +326,8 @@ p+geom_point(data = scoters, aes(scoters$longitude_dd,
   ylab("Latitude")
 
 #Plotting top model variables (fitted values)
-m10d<-na.omit(m36a)
+m10g<-na.omit(m10g)
+m36a<-na.omit(m36a)
 sco2<-data.frame(sco2)
 sco2<-na.omit(sco2)
 
@@ -342,9 +337,12 @@ sco2$fit<-fitted(m36a)
 distance<-ggplot(sco2, aes(x=dist, y=fit))
 distance+geom_point() #x-axis is in meters
 
-floorslope<-ggplot(sco2, aes(x=NAO, y=fit))
-floorslope+geom_point() #x-axis is in degrees
+nao<-ggplot(sco2, aes(x=NAO, y=fit))
+nao+geom_point() #x-axis is NAO values
 
+sco2$fit<-fitted(m10g)
+bath<-ggplot(sco2, aes(x=bathy, y=fit))
+bath+geom_point()
 
 #Home range: kernel density (adehabitatHR) function getvolumeUD, h=LSCV
 #
