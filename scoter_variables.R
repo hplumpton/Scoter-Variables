@@ -90,8 +90,9 @@ sco2$dist2=as.numeric(scale(sco2$dist))
 #plot(sedmobility)
 #plot(scoters,add=TRUE)
 #sedmob<-spTransform(sedmobility, CRS(proj4string(bathy)))
-#co2$sedmob=extract(sedmob,sco2)
+#sco2$sedmob=extract(sedmob,sco2)
 #summary(sco2)
+#624 NA's probably because they were closer to the shoreline than layer was
 
 #North Atlantic Oscillation
 sco2$NAO2=scale(sco2$NAO)
@@ -102,11 +103,26 @@ bival1=readShapePoly("Layers/NCarolina_2016_GDB/LAYER FILES/INVERTEBRATE POLYS.l
 
 
 #Fine Scale Weather
+library(RNetCDF)
+#wave
+wave=raster("Layers/wave/wave44009.nc")
+proj4string(wave)<-CRS("+proj=longlat +datum=WGS84")
+image(wave)
+wave <- as(extent(290,325, 20, 50), 'SpatialPolygons')
+proj4string(wave)<-CRS("+proj=longlat +datum=WGS84")
+plot(wave)
+plot(scoters, add=TRUE)
+summary(wave)
 
-
-
-
-
+wind=rasterToPolygons("Layers/wave/wind44009.nc")
+wind=extract(wind)
+image(wind)
+proj4string(wave)<-CRS("+proj=longlat +datum=WGS84") 
+wave <- as(extent(-82, -72, 30, 39), 'SpatialPolygons')
+proj4string(wave)<-CRS("+proj=longlat +datum=WGS84")
+plot(wave)
+plot(scoters, add=TRUE)
+summary(wave)
 
 #multicollinearity
 
@@ -128,122 +144,128 @@ sco2$NAO2=as.factor(sco2$NAO)
 sco2$slopesq=sco2$slope^2
 sco2$distsq=sco2$dist^2
 
-m0<-glm.nb(Count~1,data=sco2)
-m0$aic
-#m1<-glm.nb(Count~bathy2, data=sco2)
-#m1$aic
-#m2<-glm.nb(Count~bathy2 + dist2, data=sco2)
-#m2$aic
-#m3<-glm.nb(Count~bathy2 + slope2, data=sco2)
-#m3$aic
-#m4<-glm.nb(Count~bathy2 + sco2$sednum, data = sco2)
-#m4$aic
-#m5<-glm.nb(Count~bathy2 + sco2$sedmob2, data=sco2)
-#m5$aic
-#m6<-glm.nb(Count~bathy2 + dist2 + slope2, data=sco2)
-#m6$aic
-#m7<-glm.nb(Count~bathy2 + dist2 + sco2$sedmob2, data=sco2)
-#m7$aic
-#m8<-glm.nb(Count~bathy2 + dist2 + sco2$sednum, data=sco2)
-#m8$aic
-#m9<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sedmob2, data=sco2)
-#m9$aic
-#m10<-glm.nb(Count~dist2 + slope2 + sco2$sednum, data=sco2)
-#m10$aic
-#m10a<-glm.nb(Count~poly(dist2,2)+slope2+sco2$sednum,data=sco2)
-#m10a$aic
-#m10b<-glm.nb(Count~dist2+poly(slope2,2)+sco2$sednum,data=sco2)
-#m10b$aic
-#m10c<-glm.nb(Count~poly(bathy2,2)+dist2+slope2+sco2$sednum,data=sco2)
-#m10c$aic
-m10d<-glm.nb(Count~poly(dist2,2)+ poly(slope2,2)+sednum,data=sco2)
-m10d$aic
-m10e<-glm.nb(Count~poly(bathy2,2)+poly(dist2,2)+slope2+
+#random effects (1|Transect) and (1|SurveyBeginYear)
+sco2$Transect=as.factor(sco2$Transect)
+sco2$SurveyBeginYear=as.factor(sco2$SurveyBeginYear)
+
+library(lme4)
+m0<-glmer.nb(Count~bathy2+dist2+slope2+sednum+NAO2+
+               (1|Transect)+(1|SurveyBeginYear),data=sco2, 
+             na.action='na.omit')
+summary(m0)
+m1<-glmer.nb(Count~bathy2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+summary(m1)
+#m2<-glmer.nb(Count~bathy2 + dist2, data=sco2)
+#summary(m2)
+#m3<-glmer.nb(Count~bathy2 + slope2, data=sco2)
+#summary(m3)
+#m4<-glmer.nb(Count~bathy2 + sco2$sednum, data = sco2)
+#summary(m4)
+#m5<-glmer.nb(Count~bathy2 + sco2$sedmob2, data=sco2)
+#summary(m5)
+#m6<-glmer.nb(Count~bathy2 + dist2 + slope2, data=sco2)
+#summary(m6)
+#m7<-glmer.nb(Count~bathy2 + dist2 + sco2$sedmob2, data=sco2)
+#summary(m7)
+#m8<-glmer.nb(Count~bathy2 + dist2 + sco2$sednum, data=sco2)
+#summary(m8)
+#m9<-glmer.nb(Count~bathy2 + dist2 + slope2 + sco2$sedmob2, data=sco2)
+#summary(m9)
+#m10<-glmer.nb(Count~dist2 + slope2 + sco2$sednum, data=sco2)
+#summary(m10)
+#m10a<-glmer.nb(Count~poly(dist2,2)+slope2+sco2$sednum,data=sco2)
+#summary(m10a)
+#m10b<-glmer.nb(Count~dist2+poly(slope2,2)+sco2$sednum,data=sco2)
+#summary(m10b)
+#m10c<-glmer.nb(Count~poly(bathy2,2)+dist2+slope2+sco2$sednum,data=sco2)
+#summary(m10c)
+#m10d<-glmer.nb(Count~poly(dist2,2)+ poly(slope2,2)+sednum,data=sco2)
+#summary(m10d)
+m10e<-glmer.nb(Count~poly(bathy2,2)+poly(dist2,2)+slope2+
                sco2$sednum,data=sco2)
-m10e$aic
-m10f<-glm.nb(Count~poly(bathy2,2)+dist2+poly(slope2,2)+
+summary(m10e)
+m10f<-glmer.nb(Count~poly(bathy2,2)+dist2+poly(slope2,2)+
                sco2$sednum,data=sco2)
-m10f$aic
-m10g<-glm.nb(Count~poly(bathy2,2)+poly(dist2,2)+poly(slope2,2)+
+summary(m10f)
+m10g<-glmer.nb(Count~poly(bathy2,2)+poly(dist2,2)+poly(slope2,2)+
                sco2$sednum,data=sco2)
-m10g$aic
-#m11<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum +
+summary(m10g)
+#m11<-glmer.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum +
 #            sco2$sedmob2, data=sco2)
-#m11$aic
-#m12<-glm.nb(Count~bathy2 + slope2 + sco2$sedmob2, data=sco2)
-#m12$aic
-#m13<-glm.nb(Count~bathy2 + slope2 + sco2$sednum, data=sco2)
-#m13$aic
-#m14<-glm.nb(Count~bathy2 + slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-#m14$aic
-#m15<-glm.nb(Count~bathy2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-#m15$aic
-#m16<-glm.nb(Count~dist2, data=sco2)
-#m16$aic
-#m17<-glm.nb(Count~dist2 + slope2, data=sco2)
-#m17$aic
-#m18<-glm.nb(Count~dist2 + sco2$sedmob2, data=sco2)
-#m18$aic
-#m19<-glm.nb(Count~dist2 + sco2$sednum, data=sco2)
-#m19$aic
-#m20<-glm.nb(Count~dist2 + slope2 + sco2$sedmob2, data=sco2)
-#m20$aic
-#m21<-glm.nb(Count~dist2 + slope2 + sco2$sednum, data=sco2)
-#m21$aic
-#m22<-glm.nb(Count~dist2 + slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-#m22$aic
-#m23<-glm.nb(Count~dist2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-#m23$aic
-#m24<-glm.nb(Count~slope2, data=sco2)
-#m24$aic
-#m25<-glm.nb(Count~slope2 + sco2$sedmob2, data=sco2)
-#m25$aic
-#m26<-glm.nb(Count~slope2 + sco2$sednum, data=sco2)
-#m26$aic
-#m27<-glm.nb(Count~slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-#m27$aic
-#m28<-glm.nb(Count~sco2$sedmob2, data=sco2)
-#m28$aic
-#m29<-glm.nb(Count~sco2$sedmob2 + sco2$sednum, data=sco2)
-#m29$aic
-#m30<-glm.nb(Count~sco2$sednum, data=sco2)
-#m30$aic
-#m31<-glm.nb(Count~NAO2, data=sco2)
-#m31$aic
-#m32<-glm.nb(Count~dist2+NAO2, data=sco2)
-#m32$aic
-#m33<-glm.nb(Count~slope2+NAO2, data=sco2)
-#m33$aic
-#m34<-glm.nb(Count~sco2$sednum+NAO2, data=sco2)
-#m34$aic
-#m35<-glm.nb(Count~dist2+slope2+NAO2, data=sco2)
-#m35$aic
-#m36<-glm.nb(Count~dist2+sco2$sednum+NAO2, data=sco2)
-#m36$aic
-m36a<-glm.nb(Count~poly(dist2,2)+sco2$sednum+NAO2, data=sco2)
-m36a$aic
-#m37<-glm.nb(Count~slope2+sco2$sednum+NAO2, data=sco2)
-#m37$aic
-#m38<-glm.nb(Count~dist2+slope2+sco2$sednum+NAO2, data=sco2)
-#m38$aic
-#m39<-glm.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum + NAO2, data=sco2)
-#m39$aic
-#m40<-glm.nb(Count~bathy2 + slope2 + sco2$sednum + NAO2, data=sco2)
-#m40$aic
-#m41<-glm.nb(Count~bathy2 + dist2 + sco2$sednum + NAO2, data=sco2)
-#m41$aic
-#m42<-glm.nb(Count~bathy2 + dist2 + slope2 + NAO2, data=sco2)
-#m42$aic
-#m43<-glm.nb(Count~bathy2 + dist2 + NAO2, data=sco2)
-#m43$aic
-#m44<-glm.nb(Count~bathy2 + slope2 + NAO2, data=sco2)
-#m44$aic
-#m45<-glm.nb(Count~bathy2 + sco2$sednum + NAO2, data=sco2)
-#m45$aic
-#m45a<-glm.nb(Count~poly(bathy2,2) + sco2$sednum + NAO2, data=sco2)
-#m45a$aic
-#m46<-glm.nb(Count~bathy2 + NAO2, data=sco2)
-#m46$aic
+#summary(m11)
+#m12<-glmer.nb(Count~bathy2 + slope2 + sco2$sedmob2, data=sco2)
+#summary(m12)
+#m13<-glmer.nb(Count~bathy2 + slope2 + sco2$sednum, data=sco2)
+#summary(m13)
+#m14<-glmer.nb(Count~bathy2 + slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
+#summary(m14)
+#m15<-glmer.nb(Count~bathy2 + sco2$sedmob2 + sco2$sednum, data=sco2)
+#summary(m15)
+#m16<-glmer.nb(Count~dist2, data=sco2)
+#summary(m16)
+#m17<-glmer.nb(Count~dist2 + slope2, data=sco2)
+#summary(m17)
+#m18<-glmer.nb(Count~dist2 + sco2$sedmob2, data=sco2)
+#summary(m18)
+#m19<-glmer.nb(Count~dist2 + sco2$sednum+(1|SurveyBeginYear), data=sco2)
+#summary(m19)
+#m20<-glmer.nb(Count~dist2 + slope2 + sco2$sedmob2, data=sco2)
+#summary(m20)
+#m21<-glmer.nb(Count~dist2 + slope2 + sco2$sednum, data=sco2)
+#summary(m21)
+#m22<-glmer.nb(Count~dist2 + slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
+#summary(m22)
+#m23<-glmer.nb(Count~dist2 + sco2$sedmob2 + sco2$sednum, data=sco2)
+#summary(m23)
+#m24<-glmer.nb(Count~slope2, data=sco2)
+#summary(m24)
+#m25<-glmer.nb(Count~slope2 + sco2$sedmob2, data=sco2)
+#summary(m25)
+#m26<-glmer.nb(Count~slope2 + sco2$sednum, data=sco2)
+#summary(m26)
+#m27<-glmer.nb(Count~slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
+#summary(m27)
+#m28<-glmer.nb(Count~sco2$sedmob2, data=sco2)
+#summary(m28)
+#m29<-glmer.nb(Count~sco2$sedmob2 + sco2$sednum, data=sco2)
+#summary(m29)
+#m30<-glmer.nb(Count~sco2$sednum, data=sco2)
+#summary(m30)
+#m31<-glmer.nb(Count~NAO2, data=sco2)
+#summary(m31)
+#m32<-glmer.nb(Count~dist2+NAO2, data=sco2)
+#summary(m32)
+#m33<-glmer.nb(Count~slope2+NAO2+(1|SurveyBeginYear), data=sco2)
+#summary(m33)
+#m34<-glmer.nb(Count~sco2$sednum+NAO2+(1|SurveyBeginYear), data=sco2)
+#summary(m34)
+#m35<-glmer.nb(Count~dist2+slope2+NAO2+(1|SurveyBeginYear), data=sco2)
+#summary(m35)
+#m36<-glmer.nb(Count~dist2+sco2$sednum+NAO2+(1|SurveyBeginYear), data=sco2)
+#summary(m36)
+m36a<-glmer.nb(Count~poly(dist2,2)+sco2$sednum+NAO2, data=sco2)
+#summary(m36a)
+#m37<-glmer.nb(Count~slope2+sco2$sednum+NAO2+(1|SurveyBeginYear), data=sco2)
+#summary(m37)
+#m38<-glmer.nb(Count~dist2+slope2+sco2$sednum+NAO2, data=sco2)
+#summary(m38)
+#m39<-glmer.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum + NAO2, data=sco2)
+#summary(m39)
+#m40<-glmer.nb(Count~bathy2 + slope2 + sco2$sednum + NAO2, data=sco2)
+#summary(m40)
+#m41<-glmer.nb(Count~bathy2 + dist2 + sco2$sednum + NAO2+(1|SurveyBeginYear), data=sco2)
+#summary(m41)
+#m42<-glmer.nb(Count~bathy2 + dist2 + slope2 + NAO2, data=sco2)
+#summary(m42)
+#m43<-glmer.nb(Count~bathy2 + dist2 + NAO2, data=sco2)
+#summary(m43)
+#m44<-glmer.nb(Count~bathy2 + slope2 + NAO2, data=sco2)
+#summary(m44)
+#m45<-glmer.nb(Count~bathy2 + sco2$sednum + NAO2, data=sco2)
+#summary(m45)
+#m46<-glmer.nb(Count~bathy2 + NAO2, data=sco2)
+#summary(m46)
+
 
 #Delta AIC
 
@@ -263,6 +285,7 @@ library(MuMIn)
 out.put<-model.sel(m0,m10e,m10f,m10g,m36a)
 out.put
 summary(m36a)
+#both random effects for transect and year have NA values
 
 #prediction of top model
 
@@ -331,18 +354,46 @@ m36a<-na.omit(m36a)
 sco2<-data.frame(sco2)
 sco2<-na.omit(sco2)
 
-
+#stat_smooth(method="lm", se=TRUE)
 
 sco2$fit<-fitted(m36a)
 distance<-ggplot(sco2, aes(x=dist, y=fit))
-distance+geom_point() #x-axis is in meters
+distance+geom_point()+ #x-axis is in meters
+  stat_smooth(method="lm", formula=y~poly(x,2),se=FALSE)+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Distance from Shore (meters)")+
+  ylab("Estimated number of Black Scoters")
+
 
 nao<-ggplot(sco2, aes(x=NAO, y=fit))
-nao+geom_point() #x-axis is NAO values
+nao+geom_point()+ #x-axis is NAO values
+  stat_smooth(method="lm", se=FALSE)+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("North Atlantic Oscillation Values")+
+  ylab("Estimated number of Black Scoters")
 
 sco2$fit<-fitted(m10g)
 bath<-ggplot(sco2, aes(x=bathy, y=fit))
-bath+geom_point()
+bath+geom_point()+
+  stat_smooth(method="lm",formula=y~poly(x,2), se=FALSE)+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Water Depth (meters)")+
+  ylab("Estimated number of Black Scoters")
+
+
+summary(sco2$bathy)
+summary(sco2$dist)
+summary(sco2$slope)
+summary(sco2$NAO)
+summary(sco2$sednum)
+#3=gravel-sand, 4=sand, 5=clay-silt/sand, 6=sand-clay/silt, 
+#9=sand/silt/clay
 
 #Home range: kernel density (adehabitatHR) function getvolumeUD, h=LSCV
 #
