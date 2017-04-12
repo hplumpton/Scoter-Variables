@@ -99,7 +99,16 @@ sco2$NAO2=scale(sco2$NAO)
 
 
 #Bivalve Distribution
-bival1=readShapePoly("Layers/NCarolina_2016_GDB/LAYER FILES/INVERTEBRATE POLYS.lyr")
+bival1=readShapePoly("Layers/SCarolina/Layers/invertebrates.shp")
+proj4string(bival1)<-CRS("+proj=longlat +datum=WGS84")
+
+plot(bival1)
+plot(scoters,add=TRUE)
+bival<-spTransform(bival1,CRS(proj4string(bathy)))
+
+sco2$bival=extract(bival1,sco2)
+sco2$bival2=scale(sco2$bival)
+summary(sco2$bival)
 
 
 #Fine Scale Weather
