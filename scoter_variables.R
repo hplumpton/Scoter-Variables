@@ -99,39 +99,34 @@ sco2$NAO2=scale(sco2$NAO)
 
 
 #Bivalve Distribution
-bival1=readShapePoly("Layers/SCarolina/Layers/invertebrates.shp")
-proj4string(bival1)<-CRS("+proj=longlat +datum=WGS84")
+#bival1=readShapePoly("Layers/SCarolina/Layers/invertebrates.shp")
+#proj4string(bival1)<-CRS("+proj=longlat +datum=WGS84")
+#bival2=readShapePoly("Layers/NCarolina/LAYER FILES/invert.shp")
+#proj4string(bival2)<-CRS("+proj=longlat +datum=WGS84")
+#bival3=readShapePoly("Layers/ChesapeakeBay/LAYER FILES/invert.shp")
+#proj4string(bival3)<-CRS("+proj=longlat +datum=WGS84")
+#bival4=readShapePoly("Layers/Georgia/LAYER_FILES/invert.shp")
+#proj4string(bival4)<-CRS("+proj=longlat +datum=WGS84")
 
-plot(bival1)
-plot(scoters,add=TRUE)
-bival<-spTransform(bival1,CRS(proj4string(bathy)))
+#bival=union(bival1,bival2)
+#proj4string(bival)<-CRS("+proj=longlat +datum=WGS84")
+#bivalv=union(bival3,bival4)
+#proj4string(bivalv)<-CRS("+proj=longlat +datum=WGS84")
+#bival=union(bival,bivalv)
 
-sco2$bival=extract(bival1,sco2)
-sco2$bival2=scale(sco2$bival)
-summary(sco2$bival)
+#proj4string(bival)<-CRS("+proj=longlat +datum=WGS84")
+#bival<-spTransform(bival,CRS(proj4string(bathy)))
+#summary(bival)
+#plot(bival)
+#plot(scoters,add=TRUE)
+  
+#sco2$bival=over(bival,sco2)
+#sco2$bival2=scale(sco2$bival)
+#summary(sco2$bival)
 
 
 #Fine Scale Weather
-library(RNetCDF)
-#wave
-wave=raster("Layers/wave/wave44009.nc")
-proj4string(wave)<-CRS("+proj=longlat +datum=WGS84")
-image(wave)
-wave <- as(extent(290,325, 20, 50), 'SpatialPolygons')
-proj4string(wave)<-CRS("+proj=longlat +datum=WGS84")
-plot(wave)
-plot(scoters, add=TRUE)
-summary(wave)
 
-wind=rasterToPolygons("Layers/wave/wind44009.nc")
-wind=extract(wind)
-image(wind)
-proj4string(wave)<-CRS("+proj=longlat +datum=WGS84") 
-wave <- as(extent(-82, -72, 30, 39), 'SpatialPolygons')
-proj4string(wave)<-CRS("+proj=longlat +datum=WGS84")
-plot(wave)
-plot(scoters, add=TRUE)
-summary(wave)
 
 #multicollinearity
 
@@ -214,6 +209,7 @@ m34<-glmer.nb(Count~sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2
 m36<-glmer.nb(Count~dist2+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 m36a<-glmer.nb(Count~poly(dist2,2)+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear),
                data=sco2)
+#m36b<-glmer.nb(Count~poly(dist2,2)+sco2$sednum+NAO2+(1|SurveyBeginYear),data=sco2)
 m37<-glmer.nb(Count~slope2+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 m38<-glmer.nb(Count~dist2+slope2+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 m39<-glmer.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
@@ -294,7 +290,7 @@ scoters=read.csv("ObsData2.csv",header=TRUE)
 scoters <-na.omit(scoters)
 scoters<-data.frame(scoters)
 scoters$SurveyBeginYear<-as.factor(scoters$SurveyBeginYear)
-tranbox<-make_bbox(lon=scoters$longitude_dd, lat = scoters$latitude_dd,
+tranbox<-make_bbox(lon=scoters$longitude_dd, lat = scoters$latitude_dd+1,
                    f=.01)
 
 map<-get_map(location=tranbox, maptype = "terrain", source = 'google',
