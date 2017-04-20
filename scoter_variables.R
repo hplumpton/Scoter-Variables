@@ -34,7 +34,6 @@ substrate=readShapePoly("Layers/substrate/conmapsg.shp")
 proj4string(substrate)<-CRS("+proj=longlat +datum=WGS84")
 
 plot(substrate)
-
 plot(scoters,add=TRUE)
 
 substrate<-spTransform(substrate,CRS(proj4string(bathy)))
@@ -124,8 +123,20 @@ sco2$NAO2=scale(sco2$NAO)
 #sco2$bival2=scale(sco2$bival)
 #summary(sco2$bival)
 
+#Marine Ecoregions
+eco=readShapePoly("Layers/MEOW/meow_ecos.shp")
+proj4string(eco)<-CRS("+proj=longlat +datum=WGS84")
+
+ecoregion <- crop(eco, extent(-82, -72, 30, 39))
+proj4string(ecoregion)<-CRS("+proj=longlat +datum=WGS84")
+plot(ecoregion)
+plot(scoters,add=TRUE)
+
+ecoregion<-spTransform(ecoregion,CRS(proj4string(bathy)))
+sco2$eco=extract(ecoregion,sco2)
 
 #Fine Scale Weather
+
 
 
 #multicollinearity
@@ -144,7 +155,8 @@ cor.test(sco2$slope2,sco2$NAO2)
 library(MASS)
 
 sco2$sednum=as.factor(sco2@data$substrate$SEDNUM)
-sco2$NAO2=as.factor(sco2$NAO)
+sco2$NAO2=as.factor(sco2$NAO2)
+sco2$eco=as.factor(sco2@data$eco$ECO_CODE)
 sco2$slopesq=sco2$slope^2
 sco2$distsq=sco2$dist^2
 
@@ -220,8 +232,34 @@ m41<-glmer.nb(Count~bathy2 + dist2 + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBe
 #m44<-glmer.nb(Count~bathy2 + slope2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 m45<-glmer.nb(Count~bathy2 + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m46<-glmer.nb(Count~bathy2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-
-
+m47<-glmer.nb(Count~bathy2+ eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m48<-glmer.nb(Count~bathy2+dist2+ eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m49<-glmer.nb(Count~bathy2+dist2+slope2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m50<-glmer.nb(Count~bathy2+dist2+slope2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m51<-glmer.nb(Count~bathy2+dist2+slope2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m52<-glmer.nb(Count~bathy2+slope2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m53<-glmer.nb(Count~bathy2+slope2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m54<-glmer.nb(Count~bathy2+slope2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m55<-glmer.nb(Count~bathy2+slope2+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m56<-glmer.nb(Count~bathy2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m57<-glmer.nb(Count~bathy2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m58<-glmer.nb(Count~bathy2+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m59<-glmer.nb(Count~dist2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m60<-glmer.nb(Count~dist2+slope2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m61<-glmer.nb(Count~dist2+slope2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m62<-glmer.nb(Count~dist2+slope2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m63<-glmer.nb(Count~dist2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m64<-glmer.nb(Count~dist2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m65<-glmer.nb(Count~dist2+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m66<-glmer.nb(Count~slope2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m67<-glmer.nb(Count~slope2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m68<-glmer.nb(Count~dist2+slope2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m69<-glmer.nb(Count~slope2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m70<-glmer.nb(Count~slope2+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m71<-glmer.nb(Count~sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m72<-glmer.nb(Count~sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m73<-glmer.nb(Count~NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m74<-glmer.nb(Count~eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 
 #Delta AIC
 
@@ -242,6 +280,11 @@ library(MuMIn)
 out.put<-model.sel(m10a,m10d,m19,m34,m36,m36a,m38,m37,m39,m40,m41,m45)
 out.put
 #top model m36a(wt=0.518), m36(delta=2.75, wt=0.131), m34(delta=3.44 wt=0.093)
+out.put1<-model.sel(m47,m48,m49,m50,m51,m52,m53,m54,m55,m56,m57)
+out.put1
+out.put2<-model.sel(m58,m59,m60,m61,m62,m63,m64,m65,m66,m67)
+out.put2
+out.put3<-model.sel(m68,m69,m70,m71,m72,m73,m74)
 summary(m36a)
 
 
@@ -352,6 +395,9 @@ summary(sco2$NAO)
 summary(sco2$sednum)
 #3=gravel-sand, 4=sand, 5=clay-silt/sand, 6=sand-clay/silt, 
 #9=sand/silt/clay
+summary(sco2$eco)
+#20041=Virginian=400, 25042=Carolinian=518
+
 
 #Home range: kernel density (adehabitatHR) function getvolumeUD, h=LSCV
 #
