@@ -388,6 +388,14 @@ nao+geom_point()+ #x-axis is NAO values
   xlab("North Atlantic Oscillation Values")+
   ylab("Number of Black Scoters")
 
+sub<-ggplot(sco2, aes(x=sednum))
+sub+geom_bar()+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Substrate Type")+
+  ylab("Number of Black Scoters")
+
 sco2$fit<-fitted(m41a)
 bath<-ggplot(sco2, aes(x=bathy, y=fit))
 bath+geom_point()+
