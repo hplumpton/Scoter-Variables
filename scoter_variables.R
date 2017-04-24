@@ -143,13 +143,20 @@ sco2$eco=extract(ecoregion,sco2)
 
 cor.test(sco2$bathy2,sco2$dist2)
 cor.test(sco2$bathy2,sco2$slope2)
-cor.test(sco2$bathy2,sco2$sednum)
+cor.test(sco2$bathy2,sco2@data$substrate$SEDNUM)
 cor.test(sco2$dist2,sco2$slope2)
-cor.test(sco2$dist2,sco2$sednum)
-cor.test(sco2$slope2,sco2$sednum)
+cor.test(sco2$dist2,sco2@data$substrate$SEDNUM)
+cor.test(sco2$slope2,sco2@data$substrate$SEDNUM)
 cor.test(sco2$bathy2,sco2$NAO2)
 cor.test(sco2$dist2,sco2$NAO2)
 cor.test(sco2$slope2,sco2$NAO2)
+cor.test(sco2@data$substrate$SEDNUM,sco2$NAO2)
+cor.test(sco2$bathy2,sco2@data$eco$ECO_CODE)
+cor.test(sco2$dist2,sco2@data$eco$ECO_CODE)
+cor.test(sco2$slope2,sco2@data$eco$ECO_CODE)
+cor.test(sco2$NAO2,sco2@data$eco$ECO_CODE)
+cor.test(sco2@data$substrate$SEDNUM,sco2@data$eco$ECO_CODE)
+
 
 #negative binomial
 library(MASS)
@@ -285,7 +292,7 @@ m72<-glmer.nb(Count~sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #Weighted AIC
 library(MuMIn)
 
-out.put<-model.sel(m4a1,m64c,m64a,m34,m36,m36a,m38,m37,m39,m41,m45,m64,m62,m72,m68)
+out.put<-model.sel(m41a,m64c,m64a,m34,m36,m36a,m38,m37,m39,m41,m45,m64,m62,m72,m68)
 out.put
 #top model m36a(wt=0.288),m41a(delta=0.88,wt=0.186),m64a(delta=1.40,wt=0.143)
 
@@ -337,7 +344,7 @@ scoters=read.csv("ObsData2.csv",header=TRUE)
 scoters <-na.omit(scoters)
 scoters<-data.frame(scoters)
 scoters$SurveyBeginYear<-as.factor(scoters$SurveyBeginYear)
-tranbox<-make_bbox(lon=scoters$longitude_dd, lat = scoters$latitude_dd+1,
+tranbox<-make_bbox(lon=scoters$longitude_dd, lat = scoters$latitude_dd,
                    f=.01)
 
 map<-get_map(location=tranbox, maptype = "terrain", source = 'google',
@@ -354,7 +361,7 @@ p+geom_point(data = scoters, aes(scoters$longitude_dd,
   ylab("Latitude")
 
 #Plotting top model variables (fitted values)
-m10g<-na.omit(m10g)
+m41a<-na.omit(m41a)
 m36a<-na.omit(m36a)
 sco2<-data.frame(sco2)
 sco2<-na.omit(sco2)
@@ -364,27 +371,27 @@ sco2<-na.omit(sco2)
 sco2$fit<-fitted(m36a)
 distance<-ggplot(sco2, aes(x=dist, y=fit))
 distance+geom_point()+ #x-axis is in meters
-  stat_smooth(method="lm", formula=y~poly(x,2),se=FALSE)+
+  stat_smooth(method="lm", formula=y~poly(x,2),se=TRUE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
   xlab("Distance from Shore (meters)")+
-  ylab("Estimated number of Black Scoters")
+  ylab("Number of Black Scoters")
 
 
 nao<-ggplot(sco2, aes(x=NAO, y=fit))
 nao+geom_point()+ #x-axis is NAO values
-  stat_smooth(method="lm", se=FALSE)+
+  stat_smooth(method="lm", se=TRUE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
   xlab("North Atlantic Oscillation Values")+
-  ylab("Estimated number of Black Scoters")
+  ylab("Number of Black Scoters")
 
-sco2$fit<-fitted(m10g)
+sco2$fit<-fitted(m41a)
 bath<-ggplot(sco2, aes(x=bathy, y=fit))
 bath+geom_point()+
-  stat_smooth(method="lm",formula=y~poly(x,2), se=FALSE)+
+  stat_smooth(method="lm",formula=y~poly(x,2), se=TRUE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
