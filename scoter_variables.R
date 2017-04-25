@@ -229,12 +229,15 @@ m36<-glmer.nb(Count~dist2+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), dat
 m36a<-glmer.nb(Count~poly(dist2,2)+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear),
                data=sco2)
 #m36b<-glmer.nb(Count~poly(dist2,2)+sco2$sednum+NAO2+(1|SurveyBeginYear),data=sco2)
-m37<-glmer.nb(Count~slope2+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m36c<-glmer.nb(Count~poly(dist2,2)+sco2$sednum+poly(NAO2,2)+(1|Transect)+(1|SurveyBeginYear),
+               data=sco2)
+#m37<-glmer.nb(Count~slope2+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 m38<-glmer.nb(Count~dist2+slope2+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 m39<-glmer.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m40<-glmer.nb(Count~bathy2 + slope2 + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 m41<-glmer.nb(Count~bathy2 + dist2 + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 m41a<-glmer.nb(Count~bathy2 + poly(dist2,2) + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m41b<-glmer.nb(Count~bathy2+poly(dist2,2) +sco2$sednum +poly(NAO2,2)+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m42<-glmer.nb(Count~bathy2 + dist2 + slope2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m43<-glmer.nb(Count~bathy2 + dist2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m44<-glmer.nb(Count~bathy2 + slope2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
@@ -292,11 +295,12 @@ m72<-glmer.nb(Count~sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #Weighted AIC
 library(MuMIn)
 
-out.put<-model.sel(m41a,m64c,m64a,m34,m36,m36a,m38,m37,m39,m41,m45,m64,m62,m72,m68)
+out.put<-model.sel(m41b,m36c,m41a,m64c,m64a,m34,m36,m36a,m38,m39,m41,m45,m64,m62,m72)
 out.put
-#top model m36a(wt=0.288),m41a(delta=0.88,wt=0.186),m64a(delta=1.40,wt=0.143)
+#top model m36c(wt=0.293),m41b(delta=1.16,wt=0.164),m64c(delta=1.24,wt=0.158)
 
-summary(m36a)
+summary(m36c)
+#(dist)2 and (NAO)2 were the significant
 
 
 #prediction of top model
@@ -381,7 +385,7 @@ distance+geom_point()+ #x-axis is in meters
 
 nao<-ggplot(sco2, aes(x=NAO, y=fit))
 nao+geom_point()+ #x-axis is NAO values
-  stat_smooth(method="lm", se=TRUE)+
+  stat_smooth(method="lm",formula=y~poly(x,2), se=TRUE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
