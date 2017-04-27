@@ -136,6 +136,25 @@ ecoregion<-spTransform(ecoregion,CRS(proj4string(bathy)))
 sco2$eco=extract(ecoregion,sco2)
 
 #Fine Scale Weather
+buoy=read.csv("weather.csv",header=TRUE)
+coordinates(buoy)<-c("Longitude","Latitude") 
+#define x&y coordinates
+proj4string(buoy)<-CRS("+proj=longlat +datum=WGS84") 
+#assigning a projection
+plot(buoy)
+
+x.range<-as.numeric(c(-82,-72))
+y.range<-as.numeric(c(30,39))
+
+grd<-expand.grid(x=seq(from=x.range[1], to=x.range[2], by =0.1),
+                       y=seq(from=y.range[1], to=y.range[2],by=0.1))
+
+coordinates(grd)<-c("Longitude","Latitude")
+gridded(grd)<-TRUE
+
+plot(grd, cex=1.5)
+points(buoy)
+
 
 
 
@@ -151,11 +170,11 @@ cor.test(sco2$bathy2,sco2$NAO2)
 cor.test(sco2$dist2,sco2$NAO2)
 cor.test(sco2$slope2,sco2$NAO2)
 cor.test(sco2@data$substrate$SEDNUM,sco2$NAO2)
-cor.test(sco2$bathy2,sco2@data$eco$ECO_CODE)
-cor.test(sco2$dist2,sco2@data$eco$ECO_CODE)
-cor.test(sco2$slope2,sco2@data$eco$ECO_CODE)
-cor.test(sco2$NAO2,sco2@data$eco$ECO_CODE)
-cor.test(sco2@data$substrate$SEDNUM,sco2@data$eco$ECO_CODE)
+cor.test(sco2$bathy2,sco2@data$eco$ECOREGION)
+cor.test(sco2$dist2,sco2@data$eco$ECOREGION)
+cor.test(sco2$slope2,sco2@data$eco$ECOREGION)
+cor.test(sco2$NAO2,sco2@data$eco$ECOREGION)
+cor.test(sco2@data$substrate$SEDNUM,sco2@data$eco$ECOREGION)
 
 
 #negative binomial
@@ -163,7 +182,7 @@ library(MASS)
 library(glmnet)#lasso package
 
 sco2$sednum=as.factor(sco2@data$substrate$SEDNUM)
-sco2$eco=as.factor(sco2@data$eco$ECO_CODE)
+sco2$eco=as.factor(sco2@data$eco$ECOREGION)
 sco2$slopesq=sco2$slope^2
 sco2$distsq=sco2$dist^2
 
@@ -173,8 +192,12 @@ sco2$Transect=as.factor(sco2$Transect)
 sco2$SurveyBeginYear=as.factor(sco2$SurveyBeginYear)
 
 library(lme4)
-#m0<-glmer.nb(Count~1+(1|Transect)+(1|SurveyBeginYear),data=sco2, 
-#             na.action='na.omit')
+m0<-glm.nb(Count~1,data=sco2,na.action='na.omit')
+m0a<-glmer.nb(Count~1+(1|Transect)+(1|SurveyBeginYear),data=sco2, 
+             na.action='na.omit')
+m0b<-glmer.nb(Count~1+(1|Transect),data=sco2, na.action='na.omit')
+m0c<-glmer.nb(Count~1+(1|SurveyBeginYear),data=sco2, 
+              na.action='na.omit')
 #m1<-glmer.nb(Count~bathy2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 
 #m2<-glmer.nb(Count~bathy2 + dist2+(1|Transect)+(1|SurveyBeginYear),
@@ -223,58 +246,7 @@ library(lme4)
 #m31<-glmer.nb(Count~NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m32<-glmer.nb(Count~dist2+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m33<-glmer.nb(Count~slope2+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m34<-glmer.nb(Count~sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m35<-glmer.nb(Count~dist2+slope2+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m36<-glmer.nb(Count~dist2+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m36a<-glmer.nb(Count~poly(dist2,2)+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear),
-               data=sco2)
-#m36b<-glmer.nb(Count~poly(dist2,2)+sco2$sednum+NAO2+(1|SurveyBeginYear),data=sco2)
-m36c<-glmer.nb(Count~poly(dist2,2)+sco2$sednum+poly(NAO2,2)+(1|Transect)+(1|SurveyBeginYear),
-               data=sco2)
-#m37<-glmer.nb(Count~slope2+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m38<-glmer.nb(Count~dist2+slope2+sco2$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m39<-glmer.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m40<-glmer.nb(Count~bathy2 + slope2 + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m41<-glmer.nb(Count~bathy2 + dist2 + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m41a<-glmer.nb(Count~bathy2 + poly(dist2,2) + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m41b<-glmer.nb(Count~bathy2+poly(dist2,2) +sco2$sednum +poly(NAO2,2)+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m42<-glmer.nb(Count~bathy2 + dist2 + slope2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m43<-glmer.nb(Count~bathy2 + dist2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m44<-glmer.nb(Count~bathy2 + slope2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m45<-glmer.nb(Count~bathy2 + sco2$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m46<-glmer.nb(Count~bathy2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m47<-glmer.nb(Count~bathy2+ eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m48<-glmer.nb(Count~bathy2+dist2+ eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m49<-glmer.nb(Count~bathy2+dist2+slope2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m50<-glmer.nb(Count~bathy2+dist2+slope2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m51<-glmer.nb(Count~bathy2+dist2+slope2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m52<-glmer.nb(Count~bathy2+slope2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m53<-glmer.nb(Count~bathy2+slope2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m54<-glmer.nb(Count~bathy2+slope2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m55<-glmer.nb(Count~bathy2+slope2+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m56<-glmer.nb(Count~bathy2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m57<-glmer.nb(Count~bathy2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m57a<-glmer.nb(Count~(bathy2,2)+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m57b<-glmer.nb(Count~bathy2+sednum+poly(NAO2,2)+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m58<-glmer.nb(Count~bathy2+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m59<-glmer.nb(Count~dist2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m60<-glmer.nb(Count~dist2+slope2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m61<-glmer.nb(Count~dist2+slope2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m62<-glmer.nb(Count~dist2+slope2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m63<-glmer.nb(Count~dist2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m64<-glmer.nb(Count~dist2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m64a<-glmer.nb(Count~poly(dist2,2)+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m64b<-glmer.nb(Count~poly(dist2,2)+sednum+NAO2+eco+(1|SurveyBeginYear), data=sco2)
-m64c<-glmer.nb(Count~poly(dist2,2)+sednum+poly(NAO2,2)+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m64d<-glmer.nb(Count~dist2+sednum+poly(NAO2,2)+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m65<-glmer.nb(Count~dist2+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m66<-glmer.nb(Count~slope2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m67<-glmer.nb(Count~slope2+sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m68<-glmer.nb(Count~dist2+slope2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m69<-glmer.nb(Count~slope2+sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m70<-glmer.nb(Count~slope2+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m71<-glmer.nb(Count~sednum+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m72<-glmer.nb(Count~sednum+NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+ 
 #m72a<-glmer.nb(Count~sednum+poly(NAO2,2)+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m73<-glmer.nb(Count~NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m74<-glmer.nb(Count~eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
@@ -389,7 +361,7 @@ nao+geom_point()+ #x-axis is NAO values
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
-  xlab("North Atlantic Oscillation Values")+
+  xlab("North Atlantic Oscillation")+
   ylab("Number of Black Scoters")
 
 sub<-ggplot(sco2, aes(x=sednum))
@@ -424,3 +396,4 @@ summary(sco2$eco)
 
 #Home range: kernel density (adehabitatHR) function getvolumeUD, h=LSCV
 #
+
