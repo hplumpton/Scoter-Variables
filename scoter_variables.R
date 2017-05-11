@@ -149,13 +149,20 @@ y.range<-as.numeric(c(30,39))
 grd<-expand.grid(x=seq(from=x.range[1], to=x.range[2], by =0.1),
                        y=seq(from=y.range[1], to=y.range[2],by=0.1))
 
-coordinates(grd)<-c("Longitude","Latitude")
+coordinates(grd)<-c("x","y")
+proj4string(grd)<-CRS("+proj=longlat +datum=WGS84") 
 gridded(grd)<-TRUE
 
 plot(grd, cex=1.5)
-points(buoy)
+points(buoy, pch=1, col= "red", cex=1)
 
-
+library(gstat)
+idw<-idw(formula= ~1, locations=buoy, newdata=grd)
+idw.output=as.data.frame(idw)
+names(idw.output)[1:3]<-c("long","lat","var1.pred")
+library(ggplot2)
+ggplot()+geom_tile(data=idw.output, aes(x=long, y=lat, fill=var1.pred))+
+  geom_point(data=buoy, aes(x=Longitude, y=Latitude), shape =21, colour="red")
 
 
 #multicollinearity
