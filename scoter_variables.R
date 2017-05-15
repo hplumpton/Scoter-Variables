@@ -136,12 +136,16 @@ ecoregion<-spTransform(ecoregion,CRS(proj4string(bathy)))
 sco2$eco=extract(ecoregion,sco2)
 
 #Fine Scale Weather
-buoy=read.csv("weather.csv",header=TRUE)
-coordinates(buoy)<-c("Longitude","Latitude") 
+
+library(gstat)
+wind=read.csv("wind.csv",header=TRUE)
+wind <-na.exclude(wind)
+coordinates(wind)<-c("Long","Lat") 
 #define x&y coordinates
-proj4string(buoy)<-CRS("+proj=longlat +datum=WGS84") 
+proj4string(wind)<-CRS("+proj=longlat +datum=WGS84") 
+wind<-spTransform(wind,CRS(proj4string(bathy)))
 #assigning a projection
-plot(buoy)
+plot(wind,add=TRUE)
 
 x.range<-as.numeric(c(-82,-72))
 y.range<-as.numeric(c(30,39))
@@ -150,19 +154,29 @@ grd<-expand.grid(x=seq(from=x.range[1], to=x.range[2], by =0.1),
                        y=seq(from=y.range[1], to=y.range[2],by=0.1))
 
 coordinates(grd)<-c("x","y")
-proj4string(grd)<-CRS("+proj=longlat +datum=WGS84") 
 gridded(grd)<-TRUE
+fullgrid(grd)<-TRUE
+proj4string(grd)<-proj4string(wind)
 
-plot(grd, cex=1.5)
-points(buoy, pch=1, col= "red", cex=1)
+p.idw<-gstat::idw(feb2.2009~1, wind, newdata=grd, idp=2.0)
+p.idw<-raster(p.idw)
+plot(p.idw)
+plot(scoters,add=TRUE)
 
-library(gstat)
-idw<-idw(formula= ~1, locations=buoy, newdata=grd)
-idw.output=as.data.frame(idw)
-names(idw.output)[1:3]<-c("long","lat","var1.pred")
-library(ggplot2)
-ggplot()+geom_tile(data=idw.output, aes(x=long, y=lat, fill=var1.pred))+
-  geom_point(data=buoy, aes(x=Longitude, y=Latitude), shape =21, colour="red")
+pa.idw<-gstat::idw(feb3.2011~1, wind, newdata=grd, idp=2.0)
+pa.idw<-raster(pa.idw)
+plot(pa.idw)
+plot(scoters,add=TRUE)
+
+sco2$idw=over(idw,sco2)
+
+sco2$idw2=scale(sco2$idw)
+
+sco2$idw2=as.numeric(scale(sco2$dist)) 
+
+library(tmap)
+tm_raster(n=10,palette="RdBu",auto.palette.mapping=FALSE)+
+  tm_shape(wind)+tm_dots(size=0.2)
 
 
 #multicollinearity
