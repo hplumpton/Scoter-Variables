@@ -44,8 +44,6 @@ sco2$substrate=over(sco2,substrate)
 
 slope<-terrain(bathy, opt=c('slope'), unit='degrees')
 
-plot(scoters,add=TRUE)
-
 scotslope=SpatialPoints(sco2)
 proj4string(scotslope)<-CRS("+proj=longlat +datum=WGS84")
 
@@ -83,8 +81,21 @@ sco2$NAO2=scale(sco2$NAO)
 sco2$NAO2=as.numeric(sco2$NAO2)
 
 #Bivalve Distribution
-#bival1=readShapePoly("Layers/SCarolina/Layers/invertebrates.shp")
-#proj4string(bival1)<-CRS("+proj=longlat +datum=WGS84")
+scot<-as.data.frame(scoters)
+scosc<-subset(scot,latitude_dd>32.03 & latitude_dd<33.7,select=SurveyId:NAO)
+coordinates(scosc)<-c("longitude_dd","latitude_dd")
+
+bival1=readShapePoly("Layers/SCarolina/Layers/invertebrates.shp")
+proj4string(bival1)<-CRS("+proj=longlat +datum=WGS84")
+bival1<-spTransform(bival1,CRS(proj4string(bathy)))
+plot(bival1)
+proj4string(scosc)<-CRS("+proj=longlat +datum=WGS84")
+scosc=spTransform(scosc,CRS(proj4string(bathy)))
+plot(scosc,add=TRUE)
+scosc$bival=extract(bival1,scosc)
+summary(scosc$bival)
+head(scosc$bival)
+
 #bival2=readShapePoly("Layers/NCarolina/LAYER FILES/invert.shp")
 #proj4string(bival2)<-CRS("+proj=longlat +datum=WGS84")
 #bival3=readShapePoly("Layers/ChesapeakeBay/LAYER FILES/invert.shp")
@@ -166,7 +177,6 @@ windfeb2.2009 <-na.exclude(windfeb2.2009)
 coordinates(windfeb2.2009)<-c("Long","Lat") 
 proj4string(windfeb2.2009)<-CRS("+proj=longlat +datum=WGS84") 
 windfeb2.2009<-spTransform(windfeb2.2009,CRS(proj4string(bathy)))
-plot(windfeb2.2009)
 
 x.range<-as.numeric(c(-82,-72))
 y.range<-as.numeric(c(30,39))
@@ -1044,32 +1054,46 @@ sco2011<-rbind(scofeb3.2011,scofeb6.2011,scofeb9.2011,scofeb11.2011,scofeb12.201
 sco2012<-rbind(scofeb4.2012,scofeb5.2012,scofeb8.2012,scofeb17.2012,scofeb18.2012,scofeb21.2012,scomar20.2012,scomar21.2012,scomar24.2012,scomar28.2012,scomar29.2012)
 scototal<-rbind(sco2009,sco2010,sco2011,sco2012)
 
-sco2<-cbind(sco2[18:42],scototal)
+sco2<-cbind(sco2,scototal[18:21])
 
 
 
 #multicollinearity
 
-cor.test(sco2$bathy2,sco2$dist2)
-cor.test(sco2$bathy2,sco2$slope2)
-cor.test(sco2$bathy2,sco2@data$substrate$SEDNUM)
-cor.test(sco2$dist2,sco2$slope2)
-cor.test(sco2$dist2,sco2@data$substrate$SEDNUM)
-cor.test(sco2$slope2,sco2@data$substrate$SEDNUM)
-cor.test(sco2$bathy2,sco2$NAO2)
-cor.test(sco2$dist2,sco2$NAO2)
-cor.test(sco2$slope2,sco2$NAO2)
-cor.test(sco2@data$substrate$SEDNUM,sco2$NAO2)
-cor.test(sco2$bathy2,sco2@data$eco$ECOREGION)
-cor.test(sco2$dist2,sco2@data$eco$ECOREGION)
-cor.test(sco2$slope2,sco2@data$eco$ECOREGION)
-cor.test(sco2$NAO2,sco2@data$eco$ECOREGION)
+cor.test(sco2$bathy,sco2$dist)
+cor.test(sco2$bathy,sco2$slope)
+cor.test(sco2$bathy,sco2@data$substrate$SEDNUM)
+cor.test(sco2$dist,sco2$slope)
+cor.test(sco2$dist,sco2@data$substrate$SEDNUM)
+cor.test(sco2$slope,sco2@data$substrate$SEDNUM)
+cor.test(sco2$bathy,sco2$NAO)
+cor.test(sco2$dist,sco2$NAO)
+cor.test(sco2$slope,sco2$NAO)
+cor.test(sco2@data$substrate$SEDNUM,sco2$NAO)
+cor.test(sco2$bathy,sco2@data$eco$ECOREGION)
+cor.test(sco2$dist,sco2@data$eco$ECOREGION)
+cor.test(sco2$slope,sco2@data$eco$ECOREGION)
+cor.test(sco2$NAO,sco2@data$eco$ECOREGION)
 cor.test(sco2@data$substrate$SEDNUM,sco2@data$eco$ECOREGION)
+cor.test(sco2$bathy,sco2$wind)
+cor.test(sco2$bathy,sco2$wave)
+cor.test(sco2$dist,sco2$wind)
+cor.test(sco2$dist,sco2$wave)
+cor.test(sco2$slope,sco2$wind)
+cor.test(sco2$slope,sco2$wave)
+cor.test(sco2@data$substrate$SEDNUM,sco2$wind)
+cor.test(sco2@data$substrate$SEDNUM,sco2$wave)
+cor.test(sco2$NAO,sco2$wind)
+cor.test(sco2$NAO,sco2$wave)
+cor.test(sco2@data$eco$ECOREGION,sco2$wind)
+cor.test(sco2@data$eco$ECOREGION,sco2$wave)
+cor.test(sco2$wind,sco2$wave)
 
 
 #negative binomial
 library(MASS)
 library(glmnet)#lasso package
+library(lars)#lasso package
 
 sco2$sednum=as.factor(sco2@data$substrate$SEDNUM)
 sco2$eco=as.factor(sco2@data$eco$ECOREGION)
