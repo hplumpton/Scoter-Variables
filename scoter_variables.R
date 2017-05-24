@@ -35,7 +35,8 @@ substrate=rgdal::readOGR("Layers/substrate/conmapsg.shp")
 #plot(scoters,add=TRUE)
 
 substrate<-spTransform(substrate,CRS(proj4string(bathy)))
-sco2$substrate=over(sco2,substrate)
+sco2$substrate=extract(substrate,sco2)
+#sco2$substrate=over(sco2,substrate)
 
 
 #ocean floor slope
@@ -53,7 +54,6 @@ sco2$slope2=as.numeric(scale(sco2$slope))
 
 shoreline=rgdal::readOGR("Layers/shoreline/GSHHS_shp/i/GSHHS_i_L1.shp")
 seshoreline <- crop(shoreline, extent(-82, -72, 30, 39))
-proj4string(seshoreline)<-CRS("+proj=longlat +datum=WGS84")
 seshoreline<-spTransform(seshoreline,CRS(proj4string(bathy)))
 
 #plot(seshoreline)
@@ -94,10 +94,7 @@ proj4string(scosc)<-CRS("+proj=longlat +datum=WGS84")
 scosc=spTransform(scosc,CRS(proj4string(bathy)))
 #plot(scosc,add=TRUE)
 scosc$bival=extract(bival1,scosc)
-scosc$bival=as.numeric(scosc$bival)
-summary(scosc$bival)
-head(scosc)
-head(sconc)
+
 #north carolina
 bival2=rgdal::readOGR("Layers/NCarolina/LAYER FILES/invert.shp")
 bival2<-spTransform(bival2,CRS(proj4string(bathy)))
@@ -106,7 +103,6 @@ proj4string(sconc)<-CRS("+proj=longlat +datum=WGS84")
 sconc=spTransform(sconc,CRS(proj4string(bathy)))
 #plot(sconc,add=TRUE)
 sconc$bival=extract(bival2,sconc)
-summary(sconc$bival)
 
 #virginia
 bival3=rgdal::readOGR("Layers/ChesapeakeBay/LAYER FILES/invert.shp")
@@ -116,7 +112,6 @@ proj4string(scova)<-CRS("+proj=longlat +datum=WGS84")
 scova=spTransform(scova,CRS(proj4string(bathy)))
 #plot(scova,add=TRUE)
 scova$bival=extract(bival3,scova)
-summary(scova$bival)
 
 #georgia
 bival4=rgdal::readOGR("Layers/Georgia/LAYER_FILES/invert.shp")
@@ -126,8 +121,6 @@ proj4string(scoga)<-CRS("+proj=longlat +datum=WGS84")
 scoga=spTransform(scoga,CRS(proj4string(bathy)))
 #plot(scoga,add=TRUE)
 scoga$bival=extract(bival4,scoga)
-summary(scoga$bival)
-
 
 
 scosc$bival=as.factor(scosc@data$bival$RARNUM)
@@ -137,17 +130,16 @@ scoga$bival=as.factor(scoga@data$bival$RARNUM)
 scobival<-rbind(scosc,sconc,scova,scoga)
 
 sco2<-cbind(sco2,scobival[18])
-summary(sco2$bival)
 
 
 #Marine Ecoregions
 eco=rgdal::readOGR("Layers/MEOW/meow_ecos.shp")
 ecoregion <- crop(eco, extent(-82, -72, 30, 39))
-proj4string(ecoregion)<-CRS("+proj=longlat +datum=WGS84")
 ecoregion<-spTransform(ecoregion,CRS(proj4string(bathy)))
 #plot(ecoregion)
 #plot(scoters,add=TRUE)
 sco2$eco=extract(ecoregion,sco2)
+
 
 #Fine Scale Weather
 library(gstat)
@@ -1073,10 +1065,13 @@ sco2012<-rbind(scofeb4.2012,scofeb5.2012,scofeb8.2012,scofeb17.2012,scofeb18.201
 scototal<-rbind(sco2009,sco2010,sco2011,sco2012)
 
 sco2<-cbind(sco2,scototal[18:21])
-summary(sco2$wind)
 
 
 #multicollinearity
+
+sco2@data$substrate$SEDNUM=as.numeric(sco2@data$substrate$SEDNUM)
+sco2@data$eco$ECOREGION=as.numeric(sco2@data$eco$ECOREGION)
+sco2$bival=as.numeric(sco2$bival)
 
 cor.test(sco2$bathy,sco2$dist)
 cor.test(sco2$bathy,sco2$slope)
@@ -1106,20 +1101,43 @@ cor.test(sco2$NAO,sco2$wave)
 cor.test(sco2@data$eco$ECOREGION,sco2$wind)
 cor.test(sco2@data$eco$ECOREGION,sco2$wave)
 cor.test(sco2$wind,sco2$wave)
+cor.test(sco2$bathy,sco2$bival)
+cor.test(sco2$dist,sco2$bival)
+cor.test(sco2$slope,sco2$bival)
+cor.test(sco2@data$substrate$SEDNUM,sco2$bival)
+cor.test(sco2$NAO,sco2$bival)
+cor.test(sco2@data$eco$ECOREGION,sco2$bival)
+cor.test(sco2$wind,sco2$bival)
+cor.test(sco2$wave,sco2$bival)
+
+#LASSO
+library(glmnet)#lasso package
+
+sco2$sednum=as.factor(sco2@data$substrate$SEDNUM)
+sco2$substrate<-NULL
+sco2$eco=as.factor(sco2@data$eco$ECOREGION)
+sco2$bival=as.factor(sco2$bival)
+
+
+sco2<-data.frame(sco2)
+sco2 <-na.omit(sco2)
+x=model.matrix(Count~bathy2+dist2+slope2+sednum+NAO2+wind+wave-1,data=sco2)
+lasso<-glmnet(x,sco2$Count, family = "gaussian", alpha=1)
+plot(lasso,xvar="lambda",label=TRUE)
+
+cv.lasso=cv.glmnet(x,sco2$Count)
+plot(cv.lasso)
+coef(cv.lasso)
+
+
+
 
 
 #negative binomial
 library(MASS)
-library(glmnet)#lasso package
-library(lars)#lasso package
-
-sco2$sednum=as.factor(sco2@data$substrate$SEDNUM)
-sco2$eco=as.factor(sco2@data$eco$ECOREGION)
-sco2$slopesq=sco2$slope^2
-sco2$distsq=sco2$dist^2
-
-#random effects (1|Transect) and (1|SurveyBeginYear)
-sco2=data.frame(sco2)
+#sco2$slopesq=sco2$slope^2
+#sco2$distsq=sco2$dist^2#random effects (1|Transect) and (1|SurveyBeginYear)
+#sco2=data.frame(sco2)
 sco2$Transect=as.factor(sco2$Transect)
 sco2$SurveyBeginYear=as.factor(sco2$SurveyBeginYear)
 
@@ -1127,17 +1145,22 @@ library(lme4)
 m0<-glm.nb(Count~1,data=sco2,na.action='na.omit')
 m0a<-glmer.nb(Count~1+(1|Transect)+(1|SurveyBeginYear),data=sco2, 
              na.action='na.omit')
-m0b<-glmer.nb(Count~1+(1|Transect),data=sco2, na.action='na.omit')
-m0c<-glmer.nb(Count~1+(1|SurveyBeginYear),data=sco2, 
-              na.action='na.omit')
-#m1<-glmer.nb(Count~bathy2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-
-#m2<-glmer.nb(Count~bathy2 + dist2+(1|Transect)+(1|SurveyBeginYear),
-#             data=sco2)
-#m3<-glmer.nb(Count~bathy2 + slope2+(1|Transect)+(1|SurveyBeginYear),
-#             data=sco2)
-#m4<-glmer.nb(Count~bathy2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear),
-#             data = sco2,na.action='na.omit')
+#m0b<-glmer.nb(Count~1+(1|Transect),data=sco2, na.action='na.omit')
+#m0c<-glmer.nb(Count~1+(1|SurveyBeginYear),data=sco2, 
+#              na.action='na.omit')
+m1<-glmer.nb(Count~bathy2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+m1a<-glm.nb(Count~bathy2, data=sco2)
+summary(m1a)
+m2<-glmer.nb(Count~bathy2 + dist2+(1|Transect)+(1|SurveyBeginYear),
+             data=sco2)
+m2a<-glm.nb(Count~bathy2 + dist2,data=sco2)
+summary(m2a)
+m3<-glmer.nb(Count~bathy2 + slope2+(1|Transect)+(1|SurveyBeginYear),
+             data=sco2)
+summary(m3)
+m4<-glmer.nb(Count~bathy2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear),
+             data = sco2,na.action='na.omit')
+summary(m4)
 #m5<-glmer.nb(Count~bathy2 + sco2$sedmob2, data=sco2)
 #m6<-glmer.nb(Count~bathy2 + dist2 + slope2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m7<-glmer.nb(Count~bathy2 + dist2 + sco2$sedmob2, data=sco2)
