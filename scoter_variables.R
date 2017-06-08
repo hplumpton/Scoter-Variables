@@ -130,7 +130,7 @@ scoga$bival=as.factor(scoga@data$bival$RARNUM)
 scobival<-rbind(scosc,sconc,scova,scoga)
 
 sco2<-cbind(sco2,scobival[18])
-
+summary(sco2$bival)
 
 #Marine Ecoregions
 eco=rgdal::readOGR("Layers/MEOW/meow_ecos.shp")
@@ -188,7 +188,11 @@ coordinates(windfeb2.2009)<-c("Long","Lat")
 proj4string(windfeb2.2009)<-CRS("+proj=longlat +datum=WGS84") 
 windfeb2.2009<-spTransform(windfeb2.2009,CRS(proj4string(bathy)))
 
-grd<-spsample(windfeb2.2009, "regular", n=50000)
+x.range<-as.numeric(c(-82,-72))
+y.range<-as.numeric(c(30,39))
+grd<-expand.grid(x=seq(from=x.range[1], to=x.range[2], by =0.1),
+                           y=seq(from=y.range[1], to=y.range[2],by=0.1))
+
 names(grd)<-c("x","y")
 coordinates(grd)<-c("x","y")
 gridded(grd)<-TRUE
@@ -713,10 +717,12 @@ x.range<-as.numeric(c(-82,-72))
 y.range<-as.numeric(c(30,39))
 grd<-expand.grid(x=seq(from=x.range[1], to=x.range[2], by =0.1),
                  y=seq(from=y.range[1], to=y.range[2],by=0.1))
+
+names(grd)<-c("x","y")
 coordinates(grd)<-c("x","y")
 gridded(grd)<-TRUE
 fullgrid(grd)<-TRUE
-proj4string(grd)<-proj4string(wavefeb2.2009)
+proj4string(grd)<-proj4string(bathy)
 
 pa.idw<-gstat::idw(feb2.2009~1, wavefeb2.2009, newdata=grd, idp=2.0)
 pa.idw<-raster(pa.idw)
@@ -1065,6 +1071,229 @@ sco2012<-rbind(scofeb4.2012,scofeb5.2012,scofeb8.2012,scofeb17.2012,scofeb18.201
 scototal<-rbind(sco2009,sco2010,sco2011,sco2012)
 
 sco2<-cbind(sco2,scototal[18:21])
+sco2$sednum=as.factor(sco2@data$substrate$SEDNUM)
+sco2$substrate<-NULL
+sco2$eco=as.factor(sco2@data$eco$ECOREGION)
+sco2$bival=as.factor(sco2$bival)
+
+
+
+#transect data
+
+transect=rgdal::readOGR("Layers/transects/WinterSurvey_TrackLines_sCoast.shp")
+proj4string(transect)<-CRS("+proj=longlat +datum=WGS84")
+
+#segmenting transects
+
+library(DSpat)
+library(GISTools)
+library(spatstat)
+tran2=spTransform(transect,
+                  CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
+tran.sub=tran2[!duplicated(tran2$Transect),] #subset to remove duplicates
+tran.sub$id=seq(1,544) #add a unique ID to each transect
+
+#this just uses transect 1 as an example
+x0=coordinates(tran.sub)[[1]][[1]][1,1]
+x1=coordinates(tran.sub)[[1]][[1]][90,1]
+y0=coordinates(tran.sub)[[1]][[1]][1,2]
+y1=coordinates(tran.sub)[[1]][[1]][90,2]
+
+lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
+
+tmp=as.psp(tran.sub[tran.sub$id==1,])
+
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
+plot(tran.sub[tran.sub$id==1,])
+points(strtransect$full.transects[[1]]) #not subdividing transects still
+
+## functions below taken from http://rstudio-pubs-static.s3.amazonaws.com/10685_1f7266d60db7432486517a111c76ac8b.html
+
+#First, basic segmentation
+CreateSegment <- function(coords, from, to) {
+  distance <- 0
+  coordsOut <- c()
+  biggerThanFrom <- F
+  for (i in 1:(nrow(coords) - 1)) {
+    d <- sqrt((coords[i, 1] - coords[i + 1, 1])^2 + (coords[i, 2] - coords[i + 
+                                                                             1, 2])^2)
+    distance <- distance + d
+    if (!biggerThanFrom && (distance > from)) {
+      w <- 1 - (distance - from)/d
+      x <- coords[i, 1] + w * (coords[i + 1, 1] - coords[i, 1])
+      y <- coords[i, 2] + w * (coords[i + 1, 2] - coords[i, 2])
+      coordsOut <- rbind(coordsOut, c(x, y))
+      biggerThanFrom <- T
+    }
+    if (biggerThanFrom) {
+      if (distance > to) {
+        w <- 1 - (distance - to)/d
+        x <- coords[i, 1] + w * (coords[i + 1, 1] - coords[i, 1])
+        y <- coords[i, 2] + w * (coords[i + 1, 2] - coords[i, 2])
+        coordsOut <- rbind(coordsOut, c(x, y))
+        break
+      }
+      coordsOut <- rbind(coordsOut, c(coords[i + 1, 1], coords[i + 1, 
+                                                               2]))
+    }
+  }
+  return(coordsOut)
+}
+
+#now create multiple segments building on last function
+CreateSegments <- function(coords, length = 0, n.parts = 0) {
+  stopifnot((length > 0 || n.parts > 0))
+  # calculate total length line
+  total_length <- 0
+  for (i in 1:(nrow(coords) - 1)) {
+    d <- sqrt((coords[i, 1] - coords[i + 1, 1])^2 + (coords[i, 2] - coords[i + 
+                                                                             1, 2])^2)
+    total_length <- total_length + d
+  }
+  
+  # calculate stationing of segments
+  if (length > 0) {
+    stationing <- c(seq(from = 0, to = total_length, by = length), total_length)
+  } else {
+    stationing <- c(seq(from = 0, to = total_length, length.out = n.parts), 
+                    total_length)
+  }
+  
+  # calculate segments and store in list
+  newlines <- list()
+  for (i in 1:(length(stationing) - 1)) {
+    newlines[[i]] <- CreateSegment(coords, stationing[i], stationing[i + 
+                                                                       1])
+  }
+  return(newlines)
+}
+
+#extract x and y locations of segments for functions above. Example with transect 1
+transect.locs=coordinates(tran.sub)[[1]][[1]]
+
+#length in m -- update segment length to relevant length for analysis
+segs = CreateSegments(transect.locs,length=1000)
+
+plot(tran.sub[tran.sub$id==1,])
+col = "red"
+for (i in 1:length(segs)) {
+  col <- ifelse(col == "red", "black", "red")
+  lines(as.matrix(segs[[i]]), col = col, lwd = 2)
+}
+
+MergeLast <- function(lst) {
+  l <- length(lst)
+  lst[[l - 1]] <- rbind(lst[[l - 1]], lst[[l]])
+  lst <- lst[1:(l - 1)]
+  return(lst)
+}
+
+#translate above to SpatialLines structure
+SegmentSpatialLines <- function(sl, length = 0, n.parts = 0, merge.last = FALSE) {
+  stopifnot((length > 0 || n.parts > 0))
+  id <- 0
+  newlines <- list()
+  sl <- as(sl, "SpatialLines")
+  for (lines in sl@lines) {
+    for (line in lines@Lines) {
+      crds <- line@coords
+      # create segments
+      segments <- CreateSegments(coords = crds, length, n.parts)
+      if (merge.last && length(segments) > 1) {
+        # in case there is only one segment, merging would result into error
+        segments <- MergeLast(segments)
+      }
+      # transform segments to lineslist for SpatialLines object
+      for (segment in segments) {
+        newlines <- c(newlines, Lines(list(Line(unlist(segment))), ID = as.character(id)))
+        id <- id + 1
+      }
+    }
+  }
+  return(SpatialLines(newlines))
+}
+
+#example above with transect 2 added
+tran2=coordinates(tran.sub)[[2]][[1]]
+
+#transects 1 & 2 as spatial lines
+sl <- SpatialLines(list(Lines(list(Line(coords = transect.locs)), 
+                              ID = "1"), Lines(list(Line(coords = tran2)),ID = "2")))
+
+#segmenting spatial lines objects
+sl2 <- SegmentSpatialLines(sl, length = 1000, merge.last = TRUE)
+
+# plot
+plot(sl2, col = rep(c(1, 2), length.out = length(sl2)), axes = T)
+
+#now create a for loop to convert all transects to Lines objects
+ntransect=length(unique(tran.sub$id))
+new.line=list(Line(coords=transect.locs))
+new.lines=list(Lines(new.line,ID=1))
+for(i in 2:ntransect){
+  new.line=list(Line(coords=coordinates(tran.sub)[[i]][[1]]))
+  new.lines[[i]]=Lines(new.line,ID=i)
+}
+
+sp.out=SpatialLines(new.lines,CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
+#segment all transects
+sp.seg <- SegmentSpatialLines(sp.out, length = 1000, merge.last = TRUE)
+#plot(sp.seg, col = rep(c(1, 2), length.out = length(sp.seg)), axes = T)
+
+#head(sp.seg)
+
+#loop over 18453 segments. Needs to have x0 etc. indexed 
+#so that each polygon corner (x0,x1,y0,y1) is saved as a unique point
+x0=as.numeric()
+x1=as.numeric()
+y0=as.numeric()
+y1=as.numeric()
+
+for(i in 1:length(sp.seg)){
+  x0[i]=coordinates(sp.seg)[[i]][[1]][1,1]
+  x1[i]=coordinates(sp.seg)[[i]][[1]][dim(coordinates(sp.seg)[[i]][[1]])[1],1]
+  y0[i]=coordinates(sp.seg)[[i]][[1]][1,2]
+  y1[i]=coordinates(sp.seg)[[i]][[1]][dim(coordinates(sp.seg)[[i]][[1]])[1],2]
+}
+
+lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
+
+#tmp=as.psp(tran.sub[tran.sub$id==1,])
+tmp=as.psp(sp.seg)
+#still need to figure out how to convert these files back to a spatialpolygon 
+#to sample within each one. 
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
+#over 50 warnings they were all the same as below
+#1: In `[<-`(`*tmp*`, i, value = gpc) :
+#implicit list embedding of S4 objects is deprecated
+
+#convert each row of lines to polygon
+npoly=dim(lines)[1]
+new.poly=list(Polygon(coords=coordinates(strtransect$full.transects[[1]])))
+new.polys=list(Polygons(new.poly,ID=1))
+for(i in 2:(dim(lines)[1])){
+  new.poly=list(Polygon(coords=coordinates(strtransect$full.transects[[i]])))
+  new.polys[[i]]=Polygons(new.poly,ID=i)
+}
+
+out=SpatialPolygons(new.polys)
+proj4string(out)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
+out2=spTransform(out,CRS(proj4string(bathy)))
+#tran <- crop(out2, extent(-82, -72, 30, 39))
+#plot(tran)
+#plot(scoters,add=TRUE)
+#map("state", add=TRUE)
+
+#image(bathy)
+#plot(tran,add=TRUE)
+test=gIntersection(out2,sco2,byid=TRUE)
+ids<-rownames(data.frame(test))
+ids<-strsplit(ids, " ")
+index1<-as.numeric(sapply(ids,"[[",2))
+df.sco<-data.frame(sco2[index1,])
+write.table(df.sco, "grid.txt", sep="\t")
+
+
 
 
 #multicollinearity
@@ -1138,29 +1367,24 @@ library(MASS)
 #sco2$slopesq=sco2$slope^2
 #sco2$distsq=sco2$dist^2#random effects (1|Transect) and (1|SurveyBeginYear)
 #sco2=data.frame(sco2)
-sco2$Transect=as.factor(sco2$Transect)
-sco2$SurveyBeginYear=as.factor(sco2$SurveyBeginYear)
+#sco2$Transect=as.factor(sco2$Transect)
+#sco2$SurveyBeginYear=as.factor(sco2$SurveyBeginYear)
 
 library(lme4)
-m0<-glm.nb(Count~1,data=sco2,na.action='na.omit')
-m0a<-glmer.nb(Count~1+(1|Transect)+(1|SurveyBeginYear),data=sco2, 
-             na.action='na.omit')
+#m0<-glm.nb(Count~1,data=sco2,na.action='na.omit')
+#m0a<-glmer.nb(Count~1+(1|Transect)+(1|SurveyBeginYear),data=sco2,na.action='na.omit')
 #m0b<-glmer.nb(Count~1+(1|Transect),data=sco2, na.action='na.omit')
-#m0c<-glmer.nb(Count~1+(1|SurveyBeginYear),data=sco2, 
-#              na.action='na.omit')
-m1<-glmer.nb(Count~bathy2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-m1a<-glm.nb(Count~bathy2, data=sco2)
-summary(m1)
-m2<-glmer.nb(Count~bathy2 + dist2+(1|Transect)+(1|SurveyBeginYear),
-             data=sco2)
-m2a<-glm.nb(Count~bathy2 + dist2,data=sco2)
-summary(m2)
-m3<-glmer.nb(Count~bathy2 + slope2+(1|Transect)+(1|SurveyBeginYear),
-             data=sco2)
-summary(m3)
-m4<-glmer.nb(Count~bathy2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear),
-             data = sco2,na.action='na.omit')
-summary(m4)
+#m0c<-glmer.nb(Count~1+(1|SurveyBeginYear),data=sco2,na.action='na.omit')
+#m1<-glmer.nb(Count~bathy2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+#m1a<-glm.nb(Count~bathy2, data=sco2)
+#summary(m1)
+#m2<-glmer.nb(Count~bathy2 + dist2+(1|Transect)+(1|SurveyBeginYear),data=sco2)
+#m2a<-glm.nb(Count~bathy2 + dist2,data=sco2)
+#summary(m2)
+#m3<-glmer.nb(Count~bathy2 + slope2+(1|Transect)+(1|SurveyBeginYear),data=sco2)
+#summary(m3)
+#m4<-glmer.nb(Count~bathy2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear),data = sco2,na.action='na.omit')
+#summary(m4)
 #m5<-glmer.nb(Count~bathy2 + sco2$sedmob2, data=sco2)
 #m6<-glmer.nb(Count~bathy2 + dist2 + slope2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m7<-glmer.nb(Count~bathy2 + dist2 + sco2$sedmob2, data=sco2)
@@ -1183,8 +1407,8 @@ summary(m4)
 #m13<-glmer.nb(Count~bathy2 + slope2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m14<-glmer.nb(Count~bathy2 + slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
 #m15<-glmer.nb(Count~bathy2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-m16<-glmer.nb(Count~dist2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-summary(m16)
+#m16<-glmer.nb(Count~dist2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
+#summary(m16)
 #m17<-glmer.nb(Count~dist2 + slope2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
 #m18<-glmer.nb(Count~dist2 + sco2$sedmob2, data=sco2)
 #m19<-glmer.nb(Count~dist2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear), data=sco2)
