@@ -1087,6 +1087,7 @@ tran2010<-subset(transect, Year==2010, select=UID:Year)
 tran2011<-subset(transect, Year==2011, select=UID:Year)
 tran2012<-subset(transect, Year==2012, select=UID:Year)
 
+summary(transect$Year)
 #segmenting transects
 
 library(DSpat)
@@ -1096,7 +1097,7 @@ library(spatstat)
 tran2009=spTransform(tran2009,
                   CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
 tran.sub=tran2009[!duplicated(tran2009$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,544) #add a unique ID to each transect
+tran.sub$id=seq(1,114) #add a unique ID to each transect
 
 #this just uses transect 1 as an example
 x0=coordinates(tran.sub)[[1]][[1]][1,1]
@@ -1219,7 +1220,7 @@ SegmentSpatialLines <- function(sl, length = 0, n.parts = 0, merge.last = FALSE)
 }
 
 #example above with transect 2 added
-tran2=coordinates(tran.sub)[[2]][[1]]
+tran2009=coordinates(tran.sub)[[2]][[1]]
 
 #transects 1 & 2 as spatial lines
 sl <- SpatialLines(list(Lines(list(Line(coords = transect.locs)), 
@@ -1285,11 +1286,16 @@ out2009=SpatialPolygons(new.polys)
 proj4string(out2009)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2009=spTransform(out2009,CRS(proj4string(bathy)))
 
+
+
+
+
+
 #2010
 tran2010=spTransform(tran2010,
                      CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
 tran.sub=tran2010[!duplicated(tran2010$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,544) #add a unique ID to each transect
+tran.sub$id=seq(1,114) #add a unique ID to each transect
 
 #this just uses transect 1 as an example
 x0=coordinates(tran.sub)[[1]][[1]][1,1]
@@ -1412,7 +1418,7 @@ SegmentSpatialLines <- function(sl, length = 0, n.parts = 0, merge.last = FALSE)
 }
 
 #example above with transect 2 added
-tran2=coordinates(tran.sub)[[2]][[1]]
+tran2010=coordinates(tran.sub)[[2]][[1]]
 
 #transects 1 & 2 as spatial lines
 sl <- SpatialLines(list(Lines(list(Line(coords = transect.locs)), 
@@ -1478,11 +1484,16 @@ out2010=SpatialPolygons(new.polys)
 proj4string(out2010)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2010=spTransform(out2010,CRS(proj4string(bathy)))
 
+
+
+
+
+
 #2011
 tran2011=spTransform(tran2011,
                      CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
 tran.sub=tran2011[!duplicated(tran2011$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,544) #add a unique ID to each transect
+tran.sub$id=seq(1,114) #add a unique ID to each transect
 
 #this just uses transect 1 as an example
 x0=coordinates(tran.sub)[[1]][[1]][1,1]
@@ -1605,7 +1616,7 @@ SegmentSpatialLines <- function(sl, length = 0, n.parts = 0, merge.last = FALSE)
 }
 
 #example above with transect 2 added
-tran2=coordinates(tran.sub)[[2]][[1]]
+tran2011=coordinates(tran.sub)[[2]][[1]]
 
 #transects 1 & 2 as spatial lines
 sl <- SpatialLines(list(Lines(list(Line(coords = transect.locs)), 
@@ -1671,11 +1682,16 @@ out2011=SpatialPolygons(new.polys)
 proj4string(out2011)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2011=spTransform(out2011,CRS(proj4string(bathy)))
 
+
+
+
+
+
 #2012
 tran2012=spTransform(tran2012,
                      CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
 tran.sub=tran2012[!duplicated(tran2012$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,544) #add a unique ID to each transect
+tran.sub$id=seq(1,114) #add a unique ID to each transect
 
 #this just uses transect 1 as an example
 x0=coordinates(tran.sub)[[1]][[1]][1,1]
@@ -1798,7 +1814,7 @@ SegmentSpatialLines <- function(sl, length = 0, n.parts = 0, merge.last = FALSE)
 }
 
 #example above with transect 2 added
-tran2=coordinates(tran.sub)[[2]][[1]]
+tran2012=coordinates(tran.sub)[[2]][[1]]
 
 #transects 1 & 2 as spatial lines
 sl <- SpatialLines(list(Lines(list(Line(coords = transect.locs)), 
