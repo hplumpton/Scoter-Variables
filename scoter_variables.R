@@ -1483,7 +1483,8 @@ for(i in 2:(dim(lines)[1])){
 out2010=SpatialPolygons(new.polys)
 proj4string(out2010)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2010=spTransform(out2010,CRS(proj4string(bathy)))
-
+out2010<-as(out2010, "SpatialPolygonsDataFrame")
+writeOGR(obj=out2010, dsn="tempdir", layer="transect2010", driver="ESRI Shapefile")
 
 
 
@@ -1681,7 +1682,8 @@ for(i in 2:(dim(lines)[1])){
 out2011=SpatialPolygons(new.polys)
 proj4string(out2011)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2011=spTransform(out2011,CRS(proj4string(bathy)))
-
+out2011<-as(out2011, "SpatialPolygonsDataFrame")
+writeOGR(obj=out2011, dsn="tempdir", layer="transect2011", driver="ESRI Shapefile")
 
 
 
@@ -1879,7 +1881,8 @@ for(i in 2:(dim(lines)[1])){
 out2012=SpatialPolygons(new.polys)
 proj4string(out2012)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2012=spTransform(out2012,CRS(proj4string(bathy)))
-
+out2012<-as(out2012, "SpatialPolygonsDataFrame")
+writeOGR(obj=out2012, dsn="tempdir", layer="transect2012", driver="ESRI Shapefile")
 
 
 
