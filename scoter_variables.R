@@ -1087,7 +1087,6 @@ tran2010<-subset(transect, Year==2010, select=UID:Year)
 tran2011<-subset(transect, Year==2011, select=UID:Year)
 tran2012<-subset(transect, Year==2012, select=UID:Year)
 
-summary(transect$Year)
 #segmenting transects
 
 library(DSpat)
@@ -1285,7 +1284,8 @@ for(i in 2:(dim(lines)[1])){
 out2009=SpatialPolygons(new.polys)
 proj4string(out2009)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2009=spTransform(out2009,CRS(proj4string(bathy)))
-
+out2009<-as(out2009, "SpatialPolygonsDataFrame")
+writeOGR(obj=out2009, dsn="tempdir", layer="transect2009", driver="ESRI Shapefile")
 
 
 
@@ -1493,7 +1493,7 @@ out2010=spTransform(out2010,CRS(proj4string(bathy)))
 tran2011=spTransform(tran2011,
                      CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
 tran.sub=tran2011[!duplicated(tran2011$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,114) #add a unique ID to each transect
+tran.sub$id=seq(1,101) #add a unique ID to each transect
 
 #this just uses transect 1 as an example
 x0=coordinates(tran.sub)[[1]][[1]][1,1]
@@ -1691,7 +1691,7 @@ out2011=spTransform(out2011,CRS(proj4string(bathy)))
 tran2012=spTransform(tran2012,
                      CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
 tran.sub=tran2012[!duplicated(tran2012$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,114) #add a unique ID to each transect
+tran.sub$id=seq(1,86) #add a unique ID to each transect
 
 #this just uses transect 1 as an example
 x0=coordinates(tran.sub)[[1]][[1]][1,1]
@@ -1893,13 +1893,33 @@ scoters2012<-subset(sco2, SurveyBeginYear==2012, select=SurveyId:sednum)
 
 
 
-test1=gIntersection(out22009,sco2009,byid=TRUE)
+test1=gIntersection(out2009,sco2009,byid=TRUE)
 ids<-rownames(data.frame(test1))
 ids<-strsplit(ids, " ")
 index1<-as.numeric(sapply(ids,"[[",2))
-df.sco<-data.frame(sco2009[index1,])
-write.table(df.sco, "grid.txt", sep="\t")
+df.sco2009<-data.frame(sco2009[index1,])
+write.table(df.sco2009, "grid2009.txt", sep="\t")
 
+test2=gIntersection(out2010,sco2010,byid=TRUE)
+ids<-rownames(data.frame(test2))
+ids<-strsplit(ids, " ")
+index2<-as.numeric(sapply(ids,"[[",2))
+df.sco2010<-data.frame(sco2010[index2,])
+write.table(df.sco2010, "grid2010.txt", sep="\t")
+
+test3=gIntersection(out2011,sco2011,byid=TRUE)
+ids<-rownames(data.frame(test3))
+ids<-strsplit(ids, " ")
+index3<-as.numeric(sapply(ids,"[[",2))
+df.sco2011<-data.frame(sco2011[index3,])
+write.table(df.sco2011, "grid2011.txt", sep="\t")
+
+test4=gIntersection(out2012,sco2012,byid=TRUE)
+ids<-rownames(data.frame(test4))
+ids<-strsplit(ids, " ")
+index4<-as.numeric(sapply(ids,"[[",2))
+df.sco2012<-data.frame(sco2012[index4,])
+write.table(df.sco2012, "grid2012.txt", sep="\t")
 
 
 
