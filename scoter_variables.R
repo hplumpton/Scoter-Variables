@@ -1919,33 +1919,90 @@ ids.a<-rownames(data.frame(test.a))
 ids.a<-strsplit(ids.a, " ")
 index1.a<-as.numeric(sapply(ids.a,"[[",2))
 df.sco2009a<-data.frame(sco2[index1.a,])
-#write.table(df.sco2009a, "grid2009.txt", sep="\t")
+write.table(df.sco2009a, "grid2009.txt", sep="\t")
 
 #line 1921 runs with no error
 #the only difference (that I can tell) between sco2 and scoters2009 is that
 #scoters2009 is a subset of sco2 and has less points
 
-test2=gIntersection(out2010,scoters2010,byid=TRUE)
+test2=gIntersection(out2010,sco2,byid=TRUE)
 ids<-rownames(data.frame(test2))
 ids<-strsplit(ids, " ")
 index2<-as.numeric(sapply(ids,"[[",2))
-df.sco2010<-data.frame(scoters2010[index2,])
+df.sco2010<-data.frame(sco2[index2,])
 write.table(df.sco2010, "grid2010.txt", sep="\t")
 
-test3=gIntersection(out2011,scoters2011,byid=TRUE)
+test3=gIntersection(out2011,sco2,byid=TRUE)
 ids<-rownames(data.frame(test3))
 ids<-strsplit(ids, " ")
 index3<-as.numeric(sapply(ids,"[[",2))
-df.sco2011<-data.frame(scoters2011[index3,])
+df.sco2011<-data.frame(sco2[index3,])
 write.table(df.sco2011, "grid2011.txt", sep="\t")
 
-test4=gIntersection(out2012,scoters2012,byid=TRUE)
+test4=gIntersection(out2012,sco2,byid=TRUE)
 ids<-rownames(data.frame(test4))
 ids<-strsplit(ids, " ")
 index4<-as.numeric(sapply(ids,"[[",2))
-df.sco2012<-data.frame(scoters2012[index4,])
+df.sco2012<-data.frame(sco2[index4,])
 write.table(df.sco2012, "grid2012.txt", sep="\t")
 
+#merging with grid by year
+#2009
+grid2009=read.csv("Layers/transects/grid2009.csv",header=TRUE)
+coordinates(grid2009)<-c("longitude_dd","latitude_dd") 
+proj4string(grid2009)<-CRS("+proj=longlat +datum=WGS84") 
+grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
+
+out2009$id=seq(1,3114)
+#names(out2009)
+
+data2009<-merge(out2009,grid2009,by="id")
+df.data2009<-data.frame(data2009)
+write.table(df.data2009, "merge2009.txt", sep = "\t")
+
+#2010
+grid2010=read.csv("Layers/transects/grid2010.csv",header=TRUE)
+coordinates(grid2010)<-c("longitude_dd","latitude_dd") 
+proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84") 
+grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
+
+out2010$id=seq(1,3114)
+
+data2010<-merge(out2010,grid2010,by="id")
+df.data2010<-data.frame(data2010)
+write.table(df.data2010, "merge2010.txt", sep = "\t")
+
+#2011
+grid2011=read.csv("Layers/transects/grid2011.csv",header=TRUE)
+coordinates(grid2011)<-c("longitude_dd","latitude_dd") 
+proj4string(grid2011)<-CRS("+proj=longlat +datum=WGS84") 
+grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
+
+out2011$id=seq(1,3114)
+
+data2011<-merge(out2011,grid2011,by="id")
+df.data2011<-data.frame(data2011)
+write.table(df.data2011, "merge2011.txt", sep = "\t")
+
+#2012
+grid2012=read.csv("Layers/transects/grid2012.csv",header=TRUE)
+coordinates(grid2012)<-c("longitude_dd","latitude_dd") 
+proj4string(grid2012)<-CRS("+proj=longlat +datum=WGS84") 
+grid2012=spTransform(grid2012,CRS(proj4string(bathy)))
+
+out2012$id=seq(1,3114)
+
+data2012<-merge(out2012,grid2012,by="id")
+df.data2012<-data.frame(data2012)
+write.table(df.data2012, "merge2012.txt", sep = "\t")
+
+#combining the years together
+merge2009=read.csv("merge2009.csv",header=TRUE)
+merge2010=read.csv("merge2010.csv",header=TRUE)
+merge2011=read.csv("merge2011.csv",header=TRUE)
+merge2012=read.csv("merge2012.csv",header=TRUE)
+
+sco.total<- rbind(merge2009,merge2010,merge2011,merge2012)
 
 
 #multicollinearity
