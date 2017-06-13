@@ -1284,8 +1284,8 @@ for(i in 2:(dim(lines)[1])){
 out2009=SpatialPolygons(new.polys)
 proj4string(out2009)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2009=spTransform(out2009,CRS(proj4string(bathy)))
-out2009<-as(out2009, "SpatialPolygonsDataFrame")
-writeOGR(obj=out2009, dsn="tempdir", layer="transect2009", driver="ESRI Shapefile")
+#out2009<-as(out2009, "SpatialPolygonsDataFrame")
+#writeOGR(obj=out2009, dsn="tempdir", layer="transect2009", driver="ESRI Shapefile")
 
 
 
@@ -1483,8 +1483,8 @@ for(i in 2:(dim(lines)[1])){
 out2010=SpatialPolygons(new.polys)
 proj4string(out2010)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2010=spTransform(out2010,CRS(proj4string(bathy)))
-out2010<-as(out2010, "SpatialPolygonsDataFrame")
-writeOGR(obj=out2010, dsn="tempdir", layer="transect2010", driver="ESRI Shapefile")
+#out2010<-as(out2010, "SpatialPolygonsDataFrame")
+#writeOGR(obj=out2010, dsn="tempdir", layer="transect2010", driver="ESRI Shapefile")
 
 
 
@@ -1682,8 +1682,8 @@ for(i in 2:(dim(lines)[1])){
 out2011=SpatialPolygons(new.polys)
 proj4string(out2011)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2011=spTransform(out2011,CRS(proj4string(bathy)))
-out2011<-as(out2011, "SpatialPolygonsDataFrame")
-writeOGR(obj=out2011, dsn="tempdir", layer="transect2011", driver="ESRI Shapefile")
+#out2011<-as(out2011, "SpatialPolygonsDataFrame")
+#writeOGR(obj=out2011, dsn="tempdir", layer="transect2011", driver="ESRI Shapefile")
 
 
 
@@ -1881,9 +1881,11 @@ for(i in 2:(dim(lines)[1])){
 out2012=SpatialPolygons(new.polys)
 proj4string(out2012)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2012=spTransform(out2012,CRS(proj4string(bathy)))
-out2012<-as(out2012, "SpatialPolygonsDataFrame")
-writeOGR(obj=out2012, dsn="tempdir", layer="transect2012", driver="ESRI Shapefile")
+#out2012<-as(out2012, "SpatialPolygonsDataFrame")
+#writeOGR(obj=out2012, dsn="tempdir", layer="transect2012", driver="ESRI Shapefile")
 
+proj4string(out)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
+out2=spTransform(out,CRS(proj4string(bathy)))
 
 
 #intersecting grid and point data
@@ -1894,34 +1896,54 @@ scoters2011<-subset(sco2, SurveyBeginYear==2011, select=SurveyId:sednum)
 scoters2012<-subset(sco2, SurveyBeginYear==2012, select=SurveyId:sednum)
 
 
+test=gIntersection(out2,sco2,byid=TRUE)
+ids<-rownames(data.frame(test))
+ids<-strsplit(ids, " ")
+index<-as.numeric(sapply(ids,"[[",2))
+df.sco<-data.frame(sco2[index,])
+#write.table(df.sco, "grid.txt", sep="\t")
 
+#Original worked fine
 
-test1=gIntersection(out2009,sco2009,byid=TRUE)
+test1=gIntersection(out2009,scoters2009,byid=TRUE)
 ids<-rownames(data.frame(test1))
 ids<-strsplit(ids, " ")
 index1<-as.numeric(sapply(ids,"[[",2))
-df.sco2009<-data.frame(sco2009[index1,])
-write.table(df.sco2009, "grid2009.txt", sep="\t")
+df.sco2009<-data.frame(scoters2009[index1,])
+#write.table(df.sco2009, "grid2009.txt", sep="\t")
 
-test2=gIntersection(out2010,sco2010,byid=TRUE)
+#line 1911 gives subscript out of bounds error
+
+test.a=gIntersection(out2009,sco2,byid=TRUE)
+ids.a<-rownames(data.frame(test.a))
+ids.a<-strsplit(ids.a, " ")
+index1.a<-as.numeric(sapply(ids.a,"[[",2))
+df.sco2009a<-data.frame(sco2[index1.a,])
+#write.table(df.sco2009a, "grid2009.txt", sep="\t")
+
+#line 1921 runs with no error
+#the only difference (that I can tell) between sco2 and scoters2009 is that
+#scoters2009 is a subset of sco2 and has less points
+
+test2=gIntersection(out2010,scoters2010,byid=TRUE)
 ids<-rownames(data.frame(test2))
 ids<-strsplit(ids, " ")
 index2<-as.numeric(sapply(ids,"[[",2))
-df.sco2010<-data.frame(sco2010[index2,])
+df.sco2010<-data.frame(scoters2010[index2,])
 write.table(df.sco2010, "grid2010.txt", sep="\t")
 
-test3=gIntersection(out2011,sco2011,byid=TRUE)
+test3=gIntersection(out2011,scoters2011,byid=TRUE)
 ids<-rownames(data.frame(test3))
 ids<-strsplit(ids, " ")
 index3<-as.numeric(sapply(ids,"[[",2))
-df.sco2011<-data.frame(sco2011[index3,])
+df.sco2011<-data.frame(scoters2011[index3,])
 write.table(df.sco2011, "grid2011.txt", sep="\t")
 
-test4=gIntersection(out2012,sco2012,byid=TRUE)
+test4=gIntersection(out2012,scoters2012,byid=TRUE)
 ids<-rownames(data.frame(test4))
 ids<-strsplit(ids, " ")
 index4<-as.numeric(sapply(ids,"[[",2))
-df.sco2012<-data.frame(sco2012[index4,])
+df.sco2012<-data.frame(scoters2012[index4,])
 write.table(df.sco2012, "grid2012.txt", sep="\t")
 
 
