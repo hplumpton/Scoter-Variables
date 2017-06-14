@@ -1884,8 +1884,6 @@ out2012=spTransform(out2012,CRS(proj4string(bathy)))
 #out2012<-as(out2012, "SpatialPolygonsDataFrame")
 #writeOGR(obj=out2012, dsn="tempdir", layer="transect2012", driver="ESRI Shapefile")
 
-proj4string(out)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
-out2=spTransform(out,CRS(proj4string(bathy)))
 
 
 #intersecting grid and point data
@@ -1896,23 +1894,7 @@ scoters2011<-subset(sco2, SurveyBeginYear==2011, select=SurveyId:sednum)
 scoters2012<-subset(sco2, SurveyBeginYear==2012, select=SurveyId:sednum)
 
 
-test=gIntersection(out2,sco2,byid=TRUE)
-ids<-rownames(data.frame(test))
-ids<-strsplit(ids, " ")
-index<-as.numeric(sapply(ids,"[[",2))
-df.sco<-data.frame(sco2[index,])
-#write.table(df.sco, "grid.txt", sep="\t")
 
-#Original worked fine
-
-test1=gIntersection(out2009,scoters2009,byid=TRUE)
-ids<-rownames(data.frame(test1))
-ids<-strsplit(ids, " ")
-index1<-as.numeric(sapply(ids,"[[",2))
-df.sco2009<-data.frame(scoters2009[index1,])
-#write.table(df.sco2009, "grid2009.txt", sep="\t")
-
-#line 1911 gives subscript out of bounds error
 
 test.a=gIntersection(out2009,sco2,byid=TRUE)
 ids.a<-rownames(data.frame(test.a))
@@ -1921,9 +1903,6 @@ index1.a<-as.numeric(sapply(ids.a,"[[",2))
 df.sco2009a<-data.frame(sco2[index1.a,])
 write.table(df.sco2009a, "grid2009.txt", sep="\t")
 
-#line 1921 runs with no error
-#the only difference (that I can tell) between sco2 and scoters2009 is that
-#scoters2009 is a subset of sco2 and has less points
 
 test2=gIntersection(out2010,sco2,byid=TRUE)
 ids<-rownames(data.frame(test2))
@@ -1946,7 +1925,10 @@ index4<-as.numeric(sapply(ids,"[[",2))
 df.sco2012<-data.frame(sco2[index4,])
 write.table(df.sco2012, "grid2012.txt", sep="\t")
 
-#merging with grid by year
+
+
+#merging intercept data(above) with grid by year
+
 #2009
 grid2009=read.csv("Layers/transects/grid2009.csv",header=TRUE)
 coordinates(grid2009)<-c("longitude_dd","latitude_dd") 
@@ -1960,6 +1942,7 @@ data2009<-merge(out2009,grid2009,by="id")
 df.data2009<-data.frame(data2009)
 write.table(df.data2009, "merge2009.txt", sep = "\t")
 
+
 #2010
 grid2010=read.csv("Layers/transects/grid2010.csv",header=TRUE)
 coordinates(grid2010)<-c("longitude_dd","latitude_dd") 
@@ -1971,6 +1954,11 @@ out2010$id=seq(1,3114)
 data2010<-merge(out2010,grid2010,by="id")
 df.data2010<-data.frame(data2010)
 write.table(df.data2010, "merge2010.txt", sep = "\t")
+
+c2 = gCentroid(data2010,byid=TRUE)
+c2=spTransform(c2,CRS(proj4string(bathy)))
+df.c2=data.frame(c2)
+write.table(df.c2, "c2010.txt", sep = "\t")
 
 #2011
 grid2011=read.csv("Layers/transects/grid2011.csv",header=TRUE)
@@ -1984,6 +1972,11 @@ data2011<-merge(out2011,grid2011,by="id")
 df.data2011<-data.frame(data2011)
 write.table(df.data2011, "merge2011.txt", sep = "\t")
 
+c3 = gCentroid(data2011,byid=TRUE)
+c3=spTransform(c3,CRS(proj4string(bathy)))
+df.c3=data.frame(c3)
+write.table(df.c3, "c2011.txt", sep = "\t")
+
 #2012
 grid2012=read.csv("Layers/transects/grid2012.csv",header=TRUE)
 coordinates(grid2012)<-c("longitude_dd","latitude_dd") 
@@ -1996,6 +1989,12 @@ data2012<-merge(out2012,grid2012,by="id")
 df.data2012<-data.frame(data2012)
 write.table(df.data2012, "merge2012.txt", sep = "\t")
 
+c4 = gCentroid(data2012,byid=TRUE)
+c4=spTransform(c4,CRS(proj4string(bathy)))
+df.c4=data.frame(c4)
+write.table(df.c4, "c2012.txt", sep = "\t")
+
+
 #combining the years together
 merge2009=read.csv("merge2009.csv",header=TRUE)
 merge2010=read.csv("merge2010.csv",header=TRUE)
@@ -2003,6 +2002,31 @@ merge2011=read.csv("merge2011.csv",header=TRUE)
 merge2012=read.csv("merge2012.csv",header=TRUE)
 
 sco.total<- rbind(merge2009,merge2010,merge2011,merge2012)
+str(sco.total)
+
+#remaining values
+
+#currently working on
+
+c1 = gCentroid(data2009,byid=TRUE)
+c1=spTransform(c1,CRS(proj4string(bathy)))
+c1$bathy=extract(bathy,c1)
+c2<-merge(c1,data2009,byid=TRUE)
+df.c1=data.frame(c1)
+write.table(df.c1, "c2009.txt", sep = "\t")
+
+
+bathy=raster("Layers/etopo1 bathymetry.tif")
+coordinates(sco.total)<-c("longitude_dd","latitude_dd") 
+
+proj4string(sco.total)<-CRS("+proj=longlat +datum=WGS84") 
+sco.total=spTransform(scoters,CRS(proj4string(bathy))) 
+
+sco3=SpatialPoints(sco2) 
+
+sco.total$bathy=extract(bathy,sco.total,fun=mean, na.rm=TRUE,cellnumbers=TRUE)
+sco2$bathy2=scale(sco2$bathy)
+sco2$bathy2=as.numeric(sco2$bathy)
 
 
 #multicollinearity
