@@ -1903,14 +1903,28 @@ names(c1)
 join2009=merge(out2009,c1,by="id")
 head(join2009)
 
-join=gIntersection(out2009,c1,byid=TRUE)
-join=data.frame(join)
-head(join)
+names(join)
+names(df.sco2009)
 
-join=spTransform(join,CRS(proj4string(bathy)))
-coordinates(join[257,])
+#intersecting grid and point data
+test=gIntersection(sco2,join2009,byid=TRUE)
+ids<-rownames(data.frame(test))
+ids<-strsplit(ids, " ")
+index<-as.numeric(sapply(ids,"[[",2))
+df.sco2009<-data.frame(sco2[index1.a,])
+write.table(df.sco2009, "test.txt", sep="\t")
+
+#merging intercept data(above) with grid by year
+test2009=read.csv("test.csv",header=TRUE)
+coordinates(test2009)<-c("longitude_dd","latitude_dd") 
+proj4string(test2009)<-CRS("+proj=longlat +datum=WGS84") 
+test2009=spTransform(test2009,CRS(proj4string(bathy)))
 
 
+test.2009<-merge(join2009,test2009,by="id")
+df.test.2009<-data.frame(test.2009)
+
+#unable to keep ids straight between scoter and grid
 
 
 #intersecting grid and point data
@@ -1920,14 +1934,7 @@ scoters2010<-subset(sco2, SurveyBeginYear==2010, select=SurveyId:sednum)
 scoters2011<-subset(sco2, SurveyBeginYear==2011, select=SurveyId:sednum)
 scoters2012<-subset(sco2, SurveyBeginYear==2012, select=SurveyId:sednum)
 
-names(join)
-names(df.sco2009)
-test=gIntersection(sco2,join,byid=TRUE)
-ids<-rownames(data.frame(test))
-ids<-strsplit(ids, " ")
-index<-as.numeric(sapply(ids,"[[",2))
-df.sco2009<-data.frame(sco2[index1.a,])
-write.table(df.sco2009, "grid2009.txt", sep="\t")
+
 
 names(out2009)
 test.a=gIntersection(out2009,sco2,byid=TRUE)
