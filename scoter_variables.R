@@ -1886,6 +1886,33 @@ out2012=spTransform(out2012,CRS(proj4string(bathy)))
 
 
 
+#finding coordinates for grid cells
+#currently working on
+out2009=SpatialPolygons(new.polys)
+proj4string(out2009)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
+out2009=spTransform(out2009,CRS(proj4string(bathy)))
+
+out2009$id=seq(1,3114)
+names(out2009)
+
+c1 = gCentroid(out2009,byid=TRUE)
+c1$id=seq(1,3114)
+c1=spTransform(c1,CRS(proj4string(bathy)))
+names(c1)
+
+join2009=merge(out2009,c1,by="id")
+head(join2009)
+
+join=gIntersection(out2009,c1,byid=TRUE)
+join=data.frame(join)
+head(join)
+
+join=spTransform(join,CRS(proj4string(bathy)))
+coordinates(join[257,])
+
+
+
+
 #intersecting grid and point data
 
 scoters2009<-subset(sco2, SurveyBeginYear==2009, select=SurveyId:sednum)
@@ -1893,9 +1920,16 @@ scoters2010<-subset(sco2, SurveyBeginYear==2010, select=SurveyId:sednum)
 scoters2011<-subset(sco2, SurveyBeginYear==2011, select=SurveyId:sednum)
 scoters2012<-subset(sco2, SurveyBeginYear==2012, select=SurveyId:sednum)
 
+names(join)
+names(df.sco2009)
+test=gIntersection(sco2,join,byid=TRUE)
+ids<-rownames(data.frame(test))
+ids<-strsplit(ids, " ")
+index<-as.numeric(sapply(ids,"[[",2))
+df.sco2009<-data.frame(sco2[index1.a,])
+write.table(df.sco2009, "grid2009.txt", sep="\t")
 
-
-
+names(out2009)
 test.a=gIntersection(out2009,sco2,byid=TRUE)
 ids.a<-rownames(data.frame(test.a))
 ids.a<-strsplit(ids.a, " ")
@@ -1935,8 +1969,6 @@ coordinates(grid2009)<-c("longitude_dd","latitude_dd")
 proj4string(grid2009)<-CRS("+proj=longlat +datum=WGS84") 
 grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
 
-out2009$id=seq(1,3114)
-#names(out2009)
 
 data2009<-merge(out2009,grid2009,by="id")
 df.data2009<-data.frame(data2009)
@@ -2002,18 +2034,27 @@ merge2011=read.csv("merge2011.csv",header=TRUE)
 merge2012=read.csv("merge2012.csv",header=TRUE)
 
 sco.total<- rbind(merge2009,merge2010,merge2011,merge2012)
-str(sco.total)
+
+
+
 
 #remaining values
 
 #currently working on
 
-c1 = gCentroid(data2009,byid=TRUE)
-c1=spTransform(c1,CRS(proj4string(bathy)))
-c1$bathy=extract(bathy,c1)
-c2<-merge(c1,data2009,byid=TRUE)
-df.c1=data.frame(c1)
-write.table(df.c1, "c2009.txt", sep = "\t")
+tran2009=spTransform(tran2009,CRS(proj4string(bathy)))
+count.grid=aggregate(scoters2009["Count"],tran2009,sum)
+summary(count.grid)
+summary(scoters2009$Count)
+
+count.grid=aggregate(scoters2009["Count"],out2009,sum)
+df.count.grid=data.frame(count.grid)
+summary(df.count.grid)
+
+tran2009=data.frame(tran2009)
+
+#Error in aggregate.data.frame.SP(x, by, FUN, ..., dissolve = dissolve) : 
+#arguments must have same length
 
 
 bathy=raster("Layers/etopo1 bathymetry.tif")
