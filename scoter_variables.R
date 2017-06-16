@@ -1108,7 +1108,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=350)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1267,7 +1267,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=350)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1903,8 +1903,36 @@ names(c1)
 join2009=merge(out2009,c1,by="id")
 head(join2009)
 
-names(join)
-names(df.sco2009)
+join2009<-as(join2009, "SpatialPolygonsDataFrame")
+writeOGR(obj=join2009, dsn="tempdir", layer="join2009", driver="ESRI Shapefile")
+
+proj4string(sco2)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
+sco2=spTransform(sco2,CRS(proj4string(bathy)))
+sco2$wave2=as.numeric(sco2$wave2)
+sco2$wind2=as.numeric(sco2$wind2)
+writeOGR(obj=sco2, dsn="tempdir", layer="sco2", driver="ESRI Shapefile")
+
+grid2009=rgdal::readOGR("tempdir/grid2009.shp")
+grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
+
+grid.2009<-data.frame(grid2009)
+write.table(grid.2009, "test.txt", sep="\t")
+scot<-data.frame(sco2)
+write.table(scot, "sco2.txt", sep="\t")
+
+grid09=read.csv("grid09.csv",header = TRUE)
+scot09=merge(scot,grid09, by=c("longitude_dd","latitude_dd"))
+scot09<-data.frame(scot09)
+write.table(scot09, "scot09.txt", sep="\t")
+
+g2009=read.csv("g2009.csv",header = TRUE)
+coordinates(g2009)<-c("longitude_dd","latitude_dd") 
+proj4string(g2009)<-CRS("+proj=longlat +datum=WGS84") 
+g2009=spTransform(g2009,CRS(proj4string(bathy)))
+
+data2009<-merge(join2009,g2009,by=c("id"))
+summary(join2009$id)
+summary(g2009$id)
 
 #intersecting grid and point data
 test=gIntersection(sco2,join2009,byid=TRUE)
@@ -1923,7 +1951,7 @@ test2009=spTransform(test2009,CRS(proj4string(bathy)))
 
 test.2009<-merge(join2009,test2009,by="id")
 df.test.2009<-data.frame(test.2009)
-
+write.table(df.test.2009, "test.2009.txt", sep="\t")
 #unable to keep ids straight between scoter and grid
 
 
@@ -1988,7 +2016,6 @@ coordinates(grid2010)<-c("longitude_dd","latitude_dd")
 proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84") 
 grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
 
-out2010$id=seq(1,3114)
 
 data2010<-merge(out2010,grid2010,by="id")
 df.data2010<-data.frame(data2010)
@@ -2071,8 +2098,8 @@ proj4string(sco.total)<-CRS("+proj=longlat +datum=WGS84")
 sco.total=spTransform(scoters,CRS(proj4string(bathy))) 
 
 sco3=SpatialPoints(sco2) 
-
-sco.total$bathy=extract(bathy,sco.total,fun=mean, na.rm=TRUE,cellnumbers=TRUE)
+out2009$bathy=extract(bathy,out2009,fun=mean)
+sco.total$bathy=extract(bathy,sco.total,fun=mean)
 sco2$bathy2=scale(sco2$bathy)
 sco2$bathy2=as.numeric(sco2$bathy)
 
