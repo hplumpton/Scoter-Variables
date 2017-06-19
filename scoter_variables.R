@@ -1108,7 +1108,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=350)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=600)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1267,7 +1267,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=350)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=600)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1307,7 +1307,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1466,7 +1466,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1506,7 +1506,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1665,7 +1665,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1705,7 +1705,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1864,7 +1864,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=250)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1887,22 +1887,19 @@ out2012=spTransform(out2012,CRS(proj4string(bathy)))
 
 
 #finding coordinates for grid cells
-#currently working on
+
 out2009=SpatialPolygons(new.polys)
 proj4string(out2009)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2009=spTransform(out2009,CRS(proj4string(bathy)))
-
 out2009$id=seq(1,3114)
-names(out2009)
+
 
 c1 = gCentroid(out2009,byid=TRUE)
 c1$id=seq(1,3114)
 c1=spTransform(c1,CRS(proj4string(bathy)))
-names(c1)
+
 
 join2009=merge(out2009,c1,by="id")
-head(join2009)
-
 join2009<-as(join2009, "SpatialPolygonsDataFrame")
 writeOGR(obj=join2009, dsn="tempdir", layer="join2009", driver="ESRI Shapefile")
 
@@ -1917,148 +1914,149 @@ grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
 
 grid.2009<-data.frame(grid2009)
 write.table(grid.2009, "test.txt", sep="\t")
-scot<-data.frame(sco2)
-write.table(scot, "sco2.txt", sep="\t")
-
-grid09=read.csv("grid09.csv",header = TRUE)
-scot09=merge(scot,grid09, by=c("longitude_dd","latitude_dd"))
-scot09<-data.frame(scot09)
-write.table(scot09, "scot09.txt", sep="\t")
-
-g2009=read.csv("g2009.csv",header = TRUE)
-coordinates(g2009)<-c("longitude_dd","latitude_dd") 
-proj4string(g2009)<-CRS("+proj=longlat +datum=WGS84") 
-g2009=spTransform(g2009,CRS(proj4string(bathy)))
-
-data2009<-merge(join2009,g2009,by=c("id"))
-summary(join2009$id)
-summary(g2009$id)
-
-#intersecting grid and point data
-test=gIntersection(sco2,join2009,byid=TRUE)
-ids<-rownames(data.frame(test))
-ids<-strsplit(ids, " ")
-index<-as.numeric(sapply(ids,"[[",2))
-df.sco2009<-data.frame(sco2[index1.a,])
-write.table(df.sco2009, "test.txt", sep="\t")
-
-#merging intercept data(above) with grid by year
-test2009=read.csv("test.csv",header=TRUE)
-coordinates(test2009)<-c("longitude_dd","latitude_dd") 
-proj4string(test2009)<-CRS("+proj=longlat +datum=WGS84") 
-test2009=spTransform(test2009,CRS(proj4string(bathy)))
 
 
-test.2009<-merge(join2009,test2009,by="id")
-df.test.2009<-data.frame(test.2009)
-write.table(df.test.2009, "test.2009.txt", sep="\t")
-#unable to keep ids straight between scoter and grid
+#2010
+out2010=SpatialPolygons(new.polys)
+proj4string(out2010)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
+out2010=spTransform(out2010,CRS(proj4string(bathy)))
+out2010$id=seq(1,3117)
+
+c2 = gCentroid(out2010,byid=TRUE)
+c2$id=seq(1,3117)
+c2=spTransform(c2,CRS(proj4string(bathy)))
+
+join2010=merge(out2010,c2,by="id")
+join2010<-as(join2010, "SpatialPolygonsDataFrame")
+writeOGR(obj=join2010, dsn="tempdir", layer="join2010", driver="ESRI Shapefile")
+
+grid2010=rgdal::readOGR("tempdir/grid2010.shp")
+grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
+
+grid.2010<-data.frame(grid2010)
+write.table(grid.2010, "test2.txt", sep="\t")
+
+#2011
+out2011=SpatialPolygons(new.polys)
+proj4string(out2011)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
+out2011=spTransform(out2011,CRS(proj4string(bathy)))
+out2011$id=seq(1,2752)
 
 
-#intersecting grid and point data
+c3 = gCentroid(out2011,byid=TRUE)
+c3$id=seq(1,2752)
+c3=spTransform(c3,CRS(proj4string(bathy)))
 
-scoters2009<-subset(sco2, SurveyBeginYear==2009, select=SurveyId:sednum)
-scoters2010<-subset(sco2, SurveyBeginYear==2010, select=SurveyId:sednum)
-scoters2011<-subset(sco2, SurveyBeginYear==2011, select=SurveyId:sednum)
-scoters2012<-subset(sco2, SurveyBeginYear==2012, select=SurveyId:sednum)
+join2011=merge(out2011,c3,by="id")
+join2011<-as(join2011, "SpatialPolygonsDataFrame")
+writeOGR(obj=join2011, dsn="tempdir", layer="join2011", driver="ESRI Shapefile")
 
+grid2011=rgdal::readOGR("tempdir/grid2011.shp")
+grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
 
+grid.2011<-data.frame(grid2011)
+write.table(grid.2011, "test3.txt", sep="\t")
 
-names(out2009)
-test.a=gIntersection(out2009,sco2,byid=TRUE)
-ids.a<-rownames(data.frame(test.a))
-ids.a<-strsplit(ids.a, " ")
-index1.a<-as.numeric(sapply(ids.a,"[[",2))
-df.sco2009a<-data.frame(sco2[index1.a,])
-write.table(df.sco2009a, "grid2009.txt", sep="\t")
+#2012
+out2012=SpatialPolygons(new.polys)
+proj4string(out2012)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
+out2012=spTransform(out2012,CRS(proj4string(bathy)))
+out2012$id=seq(1,2509)
 
+c4 = gCentroid(out2012,byid=TRUE)
+c4$id=seq(1,2509)
+c4=spTransform(c4,CRS(proj4string(bathy)))
 
-test2=gIntersection(out2010,sco2,byid=TRUE)
-ids<-rownames(data.frame(test2))
-ids<-strsplit(ids, " ")
-index2<-as.numeric(sapply(ids,"[[",2))
-df.sco2010<-data.frame(sco2[index2,])
-write.table(df.sco2010, "grid2010.txt", sep="\t")
+join2012=merge(out2012,c4,by="id")
+join2012<-as(join2012, "SpatialPolygonsDataFrame")
+writeOGR(obj=join2012, dsn="tempdir", layer="join2012", driver="ESRI Shapefile")
 
-test3=gIntersection(out2011,sco2,byid=TRUE)
-ids<-rownames(data.frame(test3))
-ids<-strsplit(ids, " ")
-index3<-as.numeric(sapply(ids,"[[",2))
-df.sco2011<-data.frame(sco2[index3,])
-write.table(df.sco2011, "grid2011.txt", sep="\t")
+grid2012=rgdal::readOGR("tempdir/grid2012.shp")
+grid2012=spTransform(grid2012,CRS(proj4string(bathy)))
 
-test4=gIntersection(out2012,sco2,byid=TRUE)
-ids<-rownames(data.frame(test4))
-ids<-strsplit(ids, " ")
-index4<-as.numeric(sapply(ids,"[[",2))
-df.sco2012<-data.frame(sco2[index4,])
-write.table(df.sco2012, "grid2012.txt", sep="\t")
+grid.2012<-data.frame(grid2012)
+write.table(grid.2012, "test4.txt", sep="\t")
 
+#subseting scoter data by year
+
+#scoters2009<-subset(sco2, SurveyBeginYear==2009, select=SurveyId:sednum)
+#scoters2010<-subset(sco2, SurveyBeginYear==2010, select=SurveyId:sednum)
+#scoters2011<-subset(sco2, SurveyBeginYear==2011, select=SurveyId:sednum)
+#scoters2012<-subset(sco2, SurveyBeginYear==2012, select=SurveyId:sednum)
 
 
 #merging intercept data(above) with grid by year
 
 #2009
-grid2009=read.csv("Layers/transects/grid2009.csv",header=TRUE)
+grid2009=read.csv("Grid/grid2009.csv",header=TRUE)
 coordinates(grid2009)<-c("longitude_dd","latitude_dd") 
 proj4string(grid2009)<-CRS("+proj=longlat +datum=WGS84") 
 grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
 
-
+summary(join2009$id)
+summary(grid2009$id)
+summary(out2009$id)
 data2009<-merge(out2009,grid2009,by="id")
-df.data2009<-data.frame(data2009)
-write.table(df.data2009, "merge2009.txt", sep = "\t")
+#Error in .local(x, y, ...) : non-unique matches detected
+data2009<-merge(join2009,grid2009,by="id")
+#Error in .local(x, y, ...) : non-unique matches detected
+
+#df.data2009<-data.frame(data2009)
+#write.table(df.data2009, "merge2009.txt", sep = "\t")
 
 
 #2010
-grid2010=read.csv("Layers/transects/grid2010.csv",header=TRUE)
+grid2010=read.csv("Grid/grid2010.csv",header=TRUE)
 coordinates(grid2010)<-c("longitude_dd","latitude_dd") 
 proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84") 
 grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
 
-
+summary(join2010$id)
+summary(grid2010$id)
+summary(out2010$id)
 data2010<-merge(out2010,grid2010,by="id")
-df.data2010<-data.frame(data2010)
-write.table(df.data2010, "merge2010.txt", sep = "\t")
+#Error in .local(x, y, ...) : non-unique matches detected
+data2010<-merge(join2010,grid2010,by="id")
+#Error in .local(x, y, ...) : non-unique matches detected
 
-c2 = gCentroid(data2010,byid=TRUE)
-c2=spTransform(c2,CRS(proj4string(bathy)))
-df.c2=data.frame(c2)
-write.table(df.c2, "c2010.txt", sep = "\t")
+#df.data2010<-data.frame(data2010)
+#write.table(df.data2010, "merge2010.txt", sep = "\t")
+
+
 
 #2011
-grid2011=read.csv("Layers/transects/grid2011.csv",header=TRUE)
+grid2011=read.csv("Grid/grid2010.csv",header=TRUE)
 coordinates(grid2011)<-c("longitude_dd","latitude_dd") 
 proj4string(grid2011)<-CRS("+proj=longlat +datum=WGS84") 
 grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
 
-out2011$id=seq(1,3114)
-
+summary(join2011$id)
+summary(grid2011$id)
+summary(out2011$id)
 data2011<-merge(out2011,grid2011,by="id")
-df.data2011<-data.frame(data2011)
-write.table(df.data2011, "merge2011.txt", sep = "\t")
+#Error in .local(x, y, ...) : non-unique matches detected
+data2011<-merge(join2011,grid2011,by="id")
+#able to merge but other than "x", "y" and "id" columns everything was NA
 
-c3 = gCentroid(data2011,byid=TRUE)
-c3=spTransform(c3,CRS(proj4string(bathy)))
-df.c3=data.frame(c3)
-write.table(df.c3, "c2011.txt", sep = "\t")
+#df.data2011<-data.frame(data2011)
+#write.table(df.data2011, "merge2011.txt", sep = "\t")
 
 #2012
-grid2012=read.csv("Layers/transects/grid2012.csv",header=TRUE)
+grid2012=read.csv("Grid/grid2012.csv",header=TRUE)
 coordinates(grid2012)<-c("longitude_dd","latitude_dd") 
 proj4string(grid2012)<-CRS("+proj=longlat +datum=WGS84") 
 grid2012=spTransform(grid2012,CRS(proj4string(bathy)))
 
-out2012$id=seq(1,3114)
-
+summary(join2012$id)
+summary(grid2012$id)
+summary(out2012$id)
 data2012<-merge(out2012,grid2012,by="id")
-df.data2012<-data.frame(data2012)
-write.table(df.data2012, "merge2012.txt", sep = "\t")
+#Error in .local(x, y, ...) : non-unique matches detected
+data2012<-merge(join2012,grid2012,by="id")
+#Error in .local(x, y, ...) : non-unique matches detected
 
-c4 = gCentroid(data2012,byid=TRUE)
-c4=spTransform(c4,CRS(proj4string(bathy)))
-df.c4=data.frame(c4)
-write.table(df.c4, "c2012.txt", sep = "\t")
+#df.data2012<-data.frame(data2012)
+#write.table(df.data2012, "merge2012.txt", sep = "\t")
 
 
 #combining the years together
@@ -2067,10 +2065,16 @@ merge2010=read.csv("merge2010.csv",header=TRUE)
 merge2011=read.csv("merge2011.csv",header=TRUE)
 merge2012=read.csv("merge2012.csv",header=TRUE)
 
-sco.total<- rbind(merge2009,merge2010,merge2011,merge2012)
 
+merge<- rbind(grid2009,grid2010,grid2011,grid2012)
+summary(merge) #882 points
+summary(sco2) #914 points
+summary(scoters2009) #136 (grid 113)
+summary(scoters2010) #316 (grid 264)
+summary(scoters2011) #185 (grid 183)
+summary(scoters2012) #277 (grid 241)
 
-
+#MISSING POINTS NOT SURE WHY OR HOW
 
 #remaining values
 
