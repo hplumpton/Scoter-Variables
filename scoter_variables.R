@@ -1086,6 +1086,7 @@ tran2009<-subset(transect, Year==2009, select=UID:Year)
 tran2010<-subset(transect, Year==2010, select=UID:Year)
 tran2011<-subset(transect, Year==2011, select=UID:Year)
 tran2012<-subset(transect, Year==2012, select=UID:Year)
+writeOGR(obj=tran2009, dsn="tempdir", layer="transect2009", driver="ESRI Shapefile")
 
 #segmenting transects
 
@@ -1108,7 +1109,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=600)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=950)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1267,7 +1268,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=600)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=950)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1864,7 +1865,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=700)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
