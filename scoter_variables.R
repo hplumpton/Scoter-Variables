@@ -1086,7 +1086,10 @@ tran2009<-subset(transect, Year==2009, select=UID:Year)
 tran2010<-subset(transect, Year==2010, select=UID:Year)
 tran2011<-subset(transect, Year==2011, select=UID:Year)
 tran2012<-subset(transect, Year==2012, select=UID:Year)
-writeOGR(obj=tran2009, dsn="tempdir", layer="transect2009", driver="ESRI Shapefile")
+tran2009<-subset(tran2009, Seat=="LF", select=UID:Year)
+tran2010<-subset(tran2010, Seat=="LF", select=UID:Year)
+tran2011<-subset(tran2011, Seat=="LF", select=UID:Year)
+tran2012<-subset(tran2012, Seat=="LF", select=UID:Year)
 
 #segmenting transects
 
@@ -1096,8 +1099,9 @@ library(spatstat)
 #2009
 tran2009=spTransform(tran2009,
                   CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
-tran.sub=tran2009[!duplicated(tran2009$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,114) #add a unique ID to each transect
+tran.sub=tran2009
+#tran.sub=tran2009[!duplicated(tran2009$Transect),] #subset to remove duplicates
+tran.sub$id=seq(1,157) #add a unique ID to each transect
 
 #this just uses transect 1 as an example
 x0=coordinates(tran.sub)[[1]][[1]][1,1]
@@ -1109,7 +1113,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=950)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1268,7 +1272,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=950)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1295,8 +1299,9 @@ out2009=spTransform(out2009,CRS(proj4string(bathy)))
 #2010
 tran2010=spTransform(tran2010,
                      CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
-tran.sub=tran2010[!duplicated(tran2010$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,114) #add a unique ID to each transect
+tran.sub=tran2010
+#tran.sub=tran2010[!duplicated(tran2010$Transect),] #subset to remove duplicates
+tran.sub$id=seq(1,152) #add a unique ID to each transect
 
 #this just uses transect 1 as an example
 x0=coordinates(tran.sub)[[1]][[1]][1,1]
@@ -1308,7 +1313,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1467,7 +1472,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1494,8 +1499,9 @@ out2010=spTransform(out2010,CRS(proj4string(bathy)))
 #2011
 tran2011=spTransform(tran2011,
                      CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
-tran.sub=tran2011[!duplicated(tran2011$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,101) #add a unique ID to each transect
+tran.sub=tran2011
+#tran.sub=tran2011[!duplicated(tran2011$Transect),] #subset to remove duplicates
+tran.sub$id=seq(1,162) #add a unique ID to each transect
 
 #this just uses transect 1 as an example
 x0=coordinates(tran.sub)[[1]][[1]][1,1]
@@ -1507,7 +1513,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1666,7 +1672,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1693,8 +1699,9 @@ out2011=spTransform(out2011,CRS(proj4string(bathy)))
 #2012
 tran2012=spTransform(tran2012,
                      CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0"))
-tran.sub=tran2012[!duplicated(tran2012$Transect),] #subset to remove duplicates
-tran.sub$id=seq(1,86) #add a unique ID to each transect
+tran.sub=tran2012
+#tran.sub=tran2012[!duplicated(tran2012$Transect),] #subset to remove duplicates
+tran.sub$id=seq(1,131) #add a unique ID to each transect
 
 #this just uses transect 1 as an example
 x0=coordinates(tran.sub)[[1]][[1]][1,1]
@@ -1706,7 +1713,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1865,7 +1872,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=700)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1892,11 +1899,11 @@ out2012=spTransform(out2012,CRS(proj4string(bathy)))
 out2009=SpatialPolygons(new.polys)
 proj4string(out2009)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2009=spTransform(out2009,CRS(proj4string(bathy)))
-out2009$id=seq(1,3114)
+out2009$id=seq(1,4381)
 
 
 c1 = gCentroid(out2009,byid=TRUE)
-c1$id=seq(1,3114)
+c1$id=seq(1,4381)
 c1=spTransform(c1,CRS(proj4string(bathy)))
 
 
