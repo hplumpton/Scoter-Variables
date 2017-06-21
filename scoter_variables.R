@@ -1909,6 +1909,8 @@ c1=spTransform(c1,CRS(proj4string(bathy)))
 
 join2009=merge(out2009,c1,by="id")
 join2009<-as(join2009, "SpatialPolygonsDataFrame")
+join2009<-data.frame(join2009)
+write.table(join2009, "testjoin.txt", sep="\t")
 writeOGR(obj=join2009, dsn="tempdir", layer="join2009", driver="ESRI Shapefile")
 
 proj4string(sco2)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
@@ -1928,10 +1930,10 @@ write.table(grid.2009, "test.txt", sep="\t")
 out2010=SpatialPolygons(new.polys)
 proj4string(out2010)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2010=spTransform(out2010,CRS(proj4string(bathy)))
-out2010$id=seq(1,3117)
+out2010$id=seq(1,4235)
 
 c2 = gCentroid(out2010,byid=TRUE)
-c2$id=seq(1,3117)
+c2$id=seq(1,4235)
 c2=spTransform(c2,CRS(proj4string(bathy)))
 
 join2010=merge(out2010,c2,by="id")
@@ -1948,11 +1950,11 @@ write.table(grid.2010, "test2.txt", sep="\t")
 out2011=SpatialPolygons(new.polys)
 proj4string(out2011)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2011=spTransform(out2011,CRS(proj4string(bathy)))
-out2011$id=seq(1,2752)
+out2011$id=seq(1,4469)
 
 
 c3 = gCentroid(out2011,byid=TRUE)
-c3$id=seq(1,2752)
+c3$id=seq(1,4469)
 c3=spTransform(c3,CRS(proj4string(bathy)))
 
 join2011=merge(out2011,c3,by="id")
@@ -1969,10 +1971,10 @@ write.table(grid.2011, "test3.txt", sep="\t")
 out2012=SpatialPolygons(new.polys)
 proj4string(out2012)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2012=spTransform(out2012,CRS(proj4string(bathy)))
-out2012$id=seq(1,2509)
+out2012$id=seq(1,3824)
 
 c4 = gCentroid(out2012,byid=TRUE)
-c4$id=seq(1,2509)
+c4$id=seq(1,3824)
 c4=spTransform(c4,CRS(proj4string(bathy)))
 
 join2012=merge(out2012,c4,by="id")
@@ -2002,7 +2004,7 @@ proj4string(grid2009)<-CRS("+proj=longlat +datum=WGS84")
 grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
 
 summary(join2009$id)
-summary(grid2009$id)
+summary(grid2009)
 summary(out2009$id)
 data2009<-merge(out2009,grid2009,by="id")
 #Error in .local(x, y, ...) : non-unique matches detected
@@ -2020,7 +2022,7 @@ proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84")
 grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
 
 summary(join2010$id)
-summary(grid2010$id)
+summary(grid2010)
 summary(out2010$id)
 data2010<-merge(out2010,grid2010,by="id")
 #Error in .local(x, y, ...) : non-unique matches detected
