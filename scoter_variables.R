@@ -53,7 +53,7 @@ sco2$slope2=as.numeric(scale(sco2$slope))
 #distance to shore
 
 shoreline=rgdal::readOGR("Layers/shoreline/GSHHS_shp/i/GSHHS_i_L1.shp")
-seshoreline <- crop(shoreline, extent(-82, -72, 30, 39))
+seshoreline <- crop(shoreline, extent(-82, -72, 28, 39))
 seshoreline<-spTransform(seshoreline,CRS(proj4string(bathy)))
 
 #plot(seshoreline)
@@ -77,13 +77,13 @@ sco2$NAO2=as.numeric(sco2$NAO2)
 
 #Bivalve Distribution
 scot<-as.data.frame(scoters,header=TRUE)
-scosc<-subset(scot,latitude_dd>=32.0 & latitude_dd<33.77,select=SurveyId:NAO)
+scosc<-subset(scot,latitude_dd>=32.0 & latitude_dd<33.75,select=SurveyId:NAO)
 coordinates(scosc)<-c("longitude_dd","latitude_dd")
-sconc<-subset(scot,latitude_dd>=33.77,select=SurveyId:NAO)
+sconc<-subset(scot,latitude_dd>=33.75,select=SurveyId:NAO)
 coordinates(sconc)<-c("longitude_dd","latitude_dd")
-scoga<-subset(scot,latitude_dd>=30.8 & latitude_dd<32.0,select=SurveyId:NAO)
+scoga<-subset(scot,latitude_dd>=30.7 & latitude_dd<32.0,select=SurveyId:NAO)
 coordinates(scoga)<-c("longitude_dd","latitude_dd")
-scofl<-subset(scot,latitude_dd<30.8,select=SurveyId:NAO)
+scofl<-subset(scot,latitude_dd<30.7,select=SurveyId:NAO)
 coordinates(scofl)<-c("longitude_dd","latitude_dd")
 
 #south carolina
@@ -130,11 +130,11 @@ scofl$bival=as.factor(scofl@data$bival$RARNUM)
 scobival<-rbind(scosc,sconc,scoga,scofl)
 
 sco2<-cbind(sco2,scobival[18])
-summary(sco2$bival)
+#summary(sco2$bival)
 
 #Marine Ecoregions
 eco=rgdal::readOGR("Layers/MEOW/meow_ecos.shp")
-ecoregion <- crop(eco, extent(-82, -72, 30, 39))
+ecoregion <- crop(eco, extent(-82, -72, 28, 39))
 ecoregion<-spTransform(ecoregion,CRS(proj4string(bathy)))
 #plot(ecoregion)
 #plot(scoters,add=TRUE)
@@ -189,7 +189,7 @@ proj4string(windfeb2.2009)<-CRS("+proj=longlat +datum=WGS84")
 windfeb2.2009<-spTransform(windfeb2.2009,CRS(proj4string(bathy)))
 
 x.range<-as.numeric(c(-82,-72))
-y.range<-as.numeric(c(30,39))
+y.range<-as.numeric(c(28,39))
 grd<-expand.grid(x=seq(from=x.range[1], to=x.range[2], by =0.1),
                            y=seq(from=y.range[1], to=y.range[2],by=0.1))
 
@@ -714,7 +714,7 @@ proj4string(wavefeb2.2009)<-CRS("+proj=longlat +datum=WGS84")
 wavefeb2.2009<-spTransform(wavefeb2.2009,CRS(proj4string(bathy)))
 
 x.range<-as.numeric(c(-82,-72))
-y.range<-as.numeric(c(30,39))
+y.range<-as.numeric(c(28,39))
 grd<-expand.grid(x=seq(from=x.range[1], to=x.range[2], by =0.1),
                  y=seq(from=y.range[1], to=y.range[2],by=0.1))
 
@@ -1075,6 +1075,10 @@ sco2$sednum=as.factor(sco2@data$substrate$SEDNUM)
 sco2$substrate<-NULL
 sco2$eco=as.factor(sco2@data$eco$ECOREGION)
 sco2$bival=as.factor(sco2$bival)
+sco2$wind=as.numeric(sco2$wind)
+sco2$wind2=as.numeric(sco2$wind2)
+sco2$wave=as.numeric(sco2$wave)
+sco2$wave2=as.numeric(sco2$wave2)
 
 
 
@@ -1989,133 +1993,196 @@ write.table(grid.2012, "test4.txt", sep="\t")
 
 #subseting scoter data by year
 
-#scoters2009<-subset(sco2, SurveyBeginYear==2009, select=SurveyId:sednum)
-#scoters2010<-subset(sco2, SurveyBeginYear==2010, select=SurveyId:sednum)
-#scoters2011<-subset(sco2, SurveyBeginYear==2011, select=SurveyId:sednum)
-#scoters2012<-subset(sco2, SurveyBeginYear==2012, select=SurveyId:sednum)
-
-
-#merging intercept data(above) with grid by year
-
-#2009
-grid2009=read.csv("Grid/grid2009.csv",header=TRUE)
-coordinates(grid2009)<-c("longitude_dd","latitude_dd") 
-proj4string(grid2009)<-CRS("+proj=longlat +datum=WGS84") 
-grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
-
-summary(join2009$id)
-summary(grid2009)
-summary(out2009$id)
-data2009<-merge(out2009,grid2009,by="id")
-#Error in .local(x, y, ...) : non-unique matches detected
-data2009<-merge(join2009,grid2009,by="id")
-#Error in .local(x, y, ...) : non-unique matches detected
-
-#df.data2009<-data.frame(data2009)
-#write.table(df.data2009, "merge2009.txt", sep = "\t")
-
-
-#2010
-grid2010=read.csv("Grid/grid2010.csv",header=TRUE)
-coordinates(grid2010)<-c("longitude_dd","latitude_dd") 
-proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84") 
-grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
-
-summary(join2010$id)
-summary(grid2010)
-summary(out2010$id)
-data2010<-merge(out2010,grid2010,by="id")
-#Error in .local(x, y, ...) : non-unique matches detected
-data2010<-merge(join2010,grid2010,by="id")
-#Error in .local(x, y, ...) : non-unique matches detected
-
-#df.data2010<-data.frame(data2010)
-#write.table(df.data2010, "merge2010.txt", sep = "\t")
+scoters2009<-subset(sco2, SurveyBeginYear==2009, select=SurveyId:sednum)
+scoters2010<-subset(sco2, SurveyBeginYear==2010, select=SurveyId:sednum)
+scoters2011<-subset(sco2, SurveyBeginYear==2011, select=SurveyId:sednum)
+scoters2012<-subset(sco2, SurveyBeginYear==2012, select=SurveyId:sednum)
 
 
 
-#2011
-grid2011=read.csv("Grid/grid2010.csv",header=TRUE)
-coordinates(grid2011)<-c("longitude_dd","latitude_dd") 
-proj4string(grid2011)<-CRS("+proj=longlat +datum=WGS84") 
-grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
-
-summary(join2011$id)
-summary(grid2011$id)
-summary(out2011$id)
-data2011<-merge(out2011,grid2011,by="id")
-#Error in .local(x, y, ...) : non-unique matches detected
-data2011<-merge(join2011,grid2011,by="id")
-#able to merge but other than "x", "y" and "id" columns everything was NA
-
-#df.data2011<-data.frame(data2011)
-#write.table(df.data2011, "merge2011.txt", sep = "\t")
-
-#2012
-grid2012=read.csv("Grid/grid2012.csv",header=TRUE)
-coordinates(grid2012)<-c("longitude_dd","latitude_dd") 
-proj4string(grid2012)<-CRS("+proj=longlat +datum=WGS84") 
-grid2012=spTransform(grid2012,CRS(proj4string(bathy)))
-
-summary(join2012$id)
-summary(grid2012$id)
-summary(out2012$id)
-data2012<-merge(out2012,grid2012,by="id")
-#Error in .local(x, y, ...) : non-unique matches detected
-data2012<-merge(join2012,grid2012,by="id")
-#Error in .local(x, y, ...) : non-unique matches detected
-
-#df.data2012<-data.frame(data2012)
-#write.table(df.data2012, "merge2012.txt", sep = "\t")
-
-
-#combining the years together
-merge2009=read.csv("merge2009.csv",header=TRUE)
-merge2010=read.csv("merge2010.csv",header=TRUE)
-merge2011=read.csv("merge2011.csv",header=TRUE)
-merge2012=read.csv("merge2012.csv",header=TRUE)
-
-
-merge<- rbind(grid2009,grid2010,grid2011,grid2012)
-summary(merge) #882 points
-summary(sco2) #914 points
-summary(scoters2009) #136 (grid 113)
-summary(scoters2010) #316 (grid 264)
-summary(scoters2011) #185 (grid 183)
 summary(scoters2012) #277 (grid 241)
 
 #MISSING POINTS NOT SURE WHY OR HOW
 
-#remaining values
 
 #currently working on
 
-tran2009=spTransform(tran2009,CRS(proj4string(bathy)))
-count.grid=aggregate(scoters2009["Count"],tran2009,sum)
-summary(count.grid)
-summary(scoters2009$Count)
+#2009
+count.grid=aggregate(grid2009["Count"], join2009,sum)
+join2009$Count=as.numeric(count.grid$Count)
+join2009$Count[is.na(join2009$Count)]=0
+data2009<-merge(join2009,grid2009,by="id")
+data2009$Count[is.na(data2009$Count)]=0
 
-count.grid=aggregate(scoters2009["Count"],out2009,sum)
-df.count.grid=data.frame(count.grid)
-summary(df.count.grid)
+#names(data2009)
+#coordinates(data2009)<-c("longitude_dd","latitude_dd") 
+#proj4string(data2009)<-CRS("+proj=longlat +datum=WGS84")
+#data2009=spTransform(data2009,CRS(proj4string(bathy)))
 
-tran2009=data.frame(tran2009)
+data2009$NAO=-1.428
 
-#Error in aggregate.data.frame.SP(x, by, FUN, ..., dissolve = dissolve) : 
-#arguments must have same length
+data2009$bathy=extract(bathy,data2009,fun=mean)
+data2009$bathy=as.numeric(data2009$bathy)
+data2009$bathy2=scale(data2009$bathy)
+data2009$bathy2=as.numeric(data2009$bathy2)
+
+#data2009$substrate=extract(substrate,data2009, fun=mean)
+data2009$substrate=over(data2009,substrate)
+
+data2009$slope=extract(slope,data2009, fun=mean)
+data2009$slope=as.numeric(data2009$slope)
+data2009$slope2=scale(data2009$slope)
+data2009$slope2=as.numeric(data2009$slope2)
+
+dist<-distanceFromPoints(seshoreline,data2009)
+dist<-distance(data2009)
+proj4string(dist)<-CRS("+proj=longlat +datum=WGS84")
+data2009$dist=extract(dist,data2009)
+data2009$dist2=scale(data2009$dist)
+data2009$dist2=as.numeric(data2009$dist2)
+
+#data2009$NAO=as.null(data2009$NAO)
+data2009$NAO2=scale(data2009$NAO)
+data2009$NAO2=-0.3057961
+data2009$NAO2=as.numeric(data2009$NAO2)
+#will not scale need to look into
 
 
-bathy=raster("Layers/etopo1 bathymetry.tif")
-coordinates(sco.total)<-c("longitude_dd","latitude_dd") 
+scot<-as.data.frame(data2009,header=TRUE)
+scosc<-subset(scot,latitude_dd>=32.0 & latitude_dd<33.75,select=SurveyId:NAO)
+coordinates(scosc)<-c("longitude_dd","latitude_dd")
+sconc<-subset(scot,latitude_dd>=33.75,select=SurveyId:NAO)
+coordinates(sconc)<-c("longitude_dd","latitude_dd")
+scoga<-subset(scot,latitude_dd>=30.7 & latitude_dd<32.0,select=SurveyId:NAO)
+coordinates(scoga)<-c("longitude_dd","latitude_dd")
+scofl<-subset(scot,latitude_dd<30.7,select=SurveyId:NAO)
+coordinates(scofl)<-c("longitude_dd","latitude_dd")
 
-proj4string(sco.total)<-CRS("+proj=longlat +datum=WGS84") 
-sco.total=spTransform(scoters,CRS(proj4string(bathy))) 
+#south carolina
+proj4string(scosc)<-CRS("+proj=longlat +datum=WGS84")
+scosc=spTransform(scosc,CRS(proj4string(bathy)))
+scosc$bival=extract(bival1,scosc,fun=mean)
 
-sco3=SpatialPoints(sco2) 
-out2009$bathy=extract(bathy,out2009,fun=mean)
-sco.total$bathy=extract(bathy,sco.total,fun=mean)
-sco2$bathy2=scale(sco2$bathy)
-sco2$bathy2=as.numeric(sco2$bathy)
+#north carolina
+proj4string(sconc)<-CRS("+proj=longlat +datum=WGS84")
+sconc=spTransform(sconc,CRS(proj4string(bathy)))
+sconc$bival=extract(bival2,sconc,fun=mean)
+
+#florida
+proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
+scofl=spTransform(scofl,CRS(proj4string(bathy)))
+scofl$bival=extract(bival3,scofl,fun=mean)
+
+#georgia
+proj4string(scoga)<-CRS("+proj=longlat +datum=WGS84")
+scoga=spTransform(scoga,CRS(proj4string(bathy)))
+scoga$bival=extract(bival4,scoga,fun=mean)
+
+
+scosc$bival=as.factor(scosc@data$bival$RARNUM)
+sconc$bival=as.factor(sconc@data$bival$RARNUM)
+scoga$bival=as.factor(scoga@data$bival$RARNUM)
+scofl$bival=as.factor(scofl@data$bival$RARNUM)
+scobival<-rbind(scosc,sconc,scoga,scofl)
+
+#data2009<-cbind(data2009,scobival[18])
+#summary(sco2$bival)
+
+data2009$eco=over(data2009, ecoregion)
+
+sco<-as.data.frame(join2009)
+coordinates(sco)<-c("x","y")
+
+p.idw<-gstat::idw(feb2.2009~1, windfeb2.2009, newdata=grd, idp=2.0)
+p.idw<-raster(p.idw)
+proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
+sco=spTransform(sco,CRS(proj4string(bathy)))
+sco$w1=extract(p.idw,sco,fun=mean)
+sco$w1s=scale(sco$w1)
+
+p1.idw<-gstat::idw(feb5.2009~1, windfeb5.2009, newdata=grd, idp=2.0)
+p1.idw<-raster(p1.idw)
+sco$w6=extract(p1.idw,sco,fun=mean)
+sco$w6s=scale(sco$w6)
+
+p2.idw<-gstat::idw(feb6.2009~1, windfeb6.2009, newdata=grd, idp=2.0)
+p2.idw<-raster(p2.idw)
+sco$w2=extract(p2.idw,sco,fun=mean)
+sco$w2s=scale(sco$w2)
+
+p3.idw<-gstat::idw(feb7.2009~1, windfeb7.2009, newdata=grd, idp=2.0)
+p3.idw<-raster(p3.idw)
+sco$w3=extract(p3.idw,sco,fun=mean)
+sco$w3s=scale(sco$w3)
+
+p4.idw<-gstat::idw(feb8.2009~1, windfeb8.2009, newdata=grd, idp=2.0)
+p4.idw<-raster(p4.idw)
+sco$w4=extract(p4.idw,sco,fun=mean)
+sco$w4s=scale(sco$w4)
+
+p5.idw<-gstat::idw(feb9.2009~1, windfeb9.2009, newdata=grd, idp=2.0)
+p5.idw<-raster(p5.idw)
+sco$w5=extract(p5.idw,sco,fun=mean)
+sco$w5s=scale(sco$w5)
+
+pa.idw<-gstat::idw(feb2.2009~1, wavefeb2.2009, newdata=grd, idp=2.0)
+pa.idw<-raster(pa.idw)
+sco$wa1=extract(pa.idw,sco,fun=mean)
+sco$wa1s=scale(sco$wa1)
+
+pb.idw<-gstat::idw(feb5.2009~1, wavefeb5.2009, newdata=grd, idp=2.0)
+pb.idw<-raster(pb.idw)
+sco$wa2=extract(pb.idw,sco,fun=mean)
+sco$wa2s=scale(sco$wa2)
+
+pc.idw<-gstat::idw(feb6.2009~1, wavefeb2.2009, newdata=grd, idp=2.0)
+pc.idw<-raster(pc.idw)
+sco$wa3=extract(pc.idw,sco,fun=mean)
+sco$wa3s=scale(sco$wa3)
+
+pd.idw<-gstat::idw(feb7.2009~1, wavefeb2.2009, newdata=grd, idp=2.0)
+pd.idw<-raster(pd.idw)
+sco$wa4=extract(pd.idw,sco,fun=mean)
+sco$wa4s=scale(sco$wa4)
+
+pe.idw<-gstat::idw(feb8.2009~1, wavefeb8.2009, newdata=grd, idp=2.0)
+pe.idw<-raster(pe.idw)
+sco$wa5=extract(pe.idw,sco,fun=mean)
+sco$wa5s=scale(sco$wa5)
+
+pf.idw<-gstat::idw(feb9.2009~1, wavefeb8.2009, newdata=grd, idp=2.0)
+pf.idw<-raster(pf.idw)
+sco$wa6=extract(pf.idw,sco,fun=mean)
+sco$wa6s=scale(sco$wa6)
+
+sco<-as.data.frame(sco)
+sco$wind<-rowMeans(subset(sco, select = c(w1,w2,w3,w4,w5,w6)), na.rm = TRUE)
+sco$wind2<-rowMeans(subset(sco, select = c(w1s,w2s,w3s,w4s,w5s,w6s)), na.rm = TRUE)
+sco$wave<-rowMeans(subset(sco, select = c(wa1,wa2,wa3,wa4,wa5,wa6)), na.rm = TRUE)
+sco$wave2<-rowMeans(subset(sco, select = c(wa1s,wa2s,wa3s,wa4s,wa5s,wa6s)), na.rm = TRUE)
+coordinates(sco)<-c("x","y")
+proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
+sco=spTransform(sco,CRS(proj4string(bathy)))
+
+sco <- sco[c(-3:-26)]
+names(sco)
+
+
+
+
+
+
+summary(data2009)
+
+
+
+
+
+
+
+
+
+
 
 
 #multicollinearity
