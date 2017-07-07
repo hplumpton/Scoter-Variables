@@ -2001,7 +2001,7 @@ summary(scoters2012) #277 (grid 241)
 
 
 
-#currently working on
+#getting varible values for grid cells
 
 #2009
 count.grid=aggregate(grid2009["Count"], join2009,sum)
@@ -2189,7 +2189,9 @@ grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
 
 year2009<-rbind(data2009,grid2009)
 
+
 #2010
+grid2010$Count=as.numeric(grid2010$Count)
 count.grid=aggregate(grid2010["Count"], join2010,sum)
 join2010$Count=as.numeric(count.grid$Count)
 join2010$Count[is.na(join2010$Count)]=0
@@ -2345,7 +2347,7 @@ sco=spTransform(sco,CRS(proj4string(bathy)))
 
 sco <- sco[c(-3:-29)]
 names(sco)
-data2010<-cbind(data2010,sco[3:6])
+data2010<-cbind(data2010,sco[4:7])
 
 
 data2010<-as.data.frame(data2010)
@@ -2373,10 +2375,10 @@ coordinates(data2010)<-c("x","y")
 proj4string(data2010)<-CRS("+proj=longlat +datum=WGS84")
 data2010=spTransform(data2010,CRS(proj4string(bathy)))
 
-#grid2010=read.csv("Grid/g2010.csv",header=TRUE)
-#coordinates(grid2010)<-c("x","y")
-#proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84")
-#grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
+grid2010=read.csv("Grid/g2010.csv",header=TRUE)
+coordinates(grid2010)<-c("x","y")
+proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84")
+grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
 
 year2010<-rbind(data2010,grid2010)
 
@@ -2584,17 +2586,22 @@ grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
 year2011<-rbind(data2011,grid2011)
 
 #testing LASSO
-year2009<-data.frame(year2009)
-year2009<-na.omit(year2009)
-x=model.matrix(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2+eco+bival-1,data=year2009)
-lasso<-glmnet(x,year2009$Count, family = "gaussian", alpha=1)
+
+year$SrvyBgY=as.factor(year$SrvyBgY)
+#sco2$SurveyBeginYear=as.factor(sco2$SurveyBeginYear)
+year<-rbind(year2009,year2010,year2011)
+
+year<-data.frame(year)
+year<-na.omit(year)
+x=model.matrix(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2+eco+bival-1,data=year)
+lasso<-glmnet(x,year$Count, family = "gaussian", alpha=1)
 plot(lasso,xvar="lambda",label=TRUE)
 
 cv.lasso=cv.glmnet(x,year2009$Count)
 plot(cv.lasso)
 coef(cv.lasso)
 
-
+summary(year)
 
 
 
