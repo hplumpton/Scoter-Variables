@@ -2585,6 +2585,13 @@ grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
 
 year2011<-rbind(data2011,grid2011)
 
+
+
+
+
+
+
+
 #testing LASSO
 
 year$SrvyBgY=as.factor(year$SrvyBgY)
@@ -2597,19 +2604,11 @@ x=model.matrix(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2+eco+bival-1,dat
 lasso<-glmnet(x,year$Count, family = "gaussian", alpha=1)
 plot(lasso,xvar="lambda",label=TRUE)
 
-cv.lasso=cv.glmnet(x,year2009$Count)
+cv.lasso=cv.glmnet(x,year$Count)
 plot(cv.lasso)
 coef(cv.lasso)
 
-summary(year)
 
-
-
-
-
-grid2010=read.csv("Grid/grid2010.csv",header=TRUE)
-grid2011=read.csv("Grid/grid2011.csv",header=TRUE)
-grid2012=read.csv("Grid/grid2012.csv",header=TRUE)
 
 
 
