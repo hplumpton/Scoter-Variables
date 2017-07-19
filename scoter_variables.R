@@ -2593,15 +2593,15 @@ year2011<-rbind(data2011,grid2011)
 
 
 #testing LASSO
-
+library(glmnet)
 year$SrvyBgY=as.factor(year$SrvyBgY)
 #sco2$SurveyBeginYear=as.factor(sco2$SurveyBeginYear)
 year<-rbind(year2009,year2010,year2011)
 
 year<-data.frame(year)
 year<-na.omit(year)
-x=model.matrix(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2+eco+bival-1,data=year)
-lasso<-glmnet(x,year$Count, family = "gaussian", alpha=1)
+x=model.matrix(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2+eco+bival,data=year)
+lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
 plot(lasso,xvar="lambda",label=TRUE)
 
 cv.lasso=cv.glmnet(x,year$Count)
