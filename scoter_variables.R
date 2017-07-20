@@ -2608,12 +2608,15 @@ cv.lasso=cv.glmnet(x,year$Count)
 plot(cv.lasso)
 coef(cv.lasso)
 
+library(glmmLasso)
+lm1 <- glmmLasso(Count~bathy2+dist2+slope2+as.factor(sednum)+NAO2+wind2+wave2+as.factor(eco)+as.factor(bival), rnd = list(SrvyBgY=~1),
+                 family=quasipoisson(link = "log"), lambda=10, data = year)
+#Error in logLik.glmmLasso(y = y, mu = mu, family = family, ranef.logLik = NULL,  : 
+#object 'loglik' not found
 
-
-
-
-
-
+lm2<- glmmLasso(Count~bathy2+dist2+slope2+as.factor(sednum)+NAO2+wind2+wave2+as.factor(eco)+as.factor(bival), rnd = list(SrvyBgY=~1),
+                 family=quasipoisson, lambda=10, data = year)
+#Error: object of type 'closure' is not subsettable
 
 
 #multicollinearity
