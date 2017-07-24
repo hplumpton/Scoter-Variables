@@ -2676,7 +2676,7 @@ is.factor(year$bival)
 year$sednum=as.factor(year$sednum)
 year$bival=as.factor(year$bival)
 m0a<-glmer.nb(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2+eco+bival+(1|SrvyBgY),data=year)
-
+m0<-glm.nb(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2+eco+bival,data=year)
 
 
 
