@@ -2586,21 +2586,31 @@ grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
 year2011<-rbind(data2011,grid2011)
 
 
+#Adding the fall(Sept-Nov) and summer(Jun-Aug) NAO values
+year<-rbind(year2009,year2010,year2011)
+year<-data.frame(year)
+write.table(year, "year.txt", sep="\t")
+year=read.csv("Grid/year.csv", header=TRUE)
+coordinates(year)<-c("x","y")
+proj4string(year)<-CRS("+proj=longlat +datum=WGS84")
+year=spTransform(year,CRS(proj4string(bathy)))
+year$S.NAO2=scale(year$S.NAO)
+year$S.NAO2=as.numeric(year$S.NAO2)
+year$F.NAO2=scale(year$F.NAO)
+year$F.NAO2=as.numeric(year$F.NAO2)
 
-
-
-
-
+#pca= nao, wind, wave
+year<-na.omit(year)
+a<-princomp(year[c(3,13,15)])
+year$air<-a$scores[,1]
 
 #testing LASSO
 library(glmnet)
-year$SrvyBgY=as.factor(year$SrvyBgY)
-#sco2$SurveyBeginYear=as.factor(sco2$SurveyBeginYear)
-year<-rbind(year2009,year2010,year2011)
-
 year<-data.frame(year)
+year$SrvyBgY=as.factor(year$SrvyBgY)
 year<-na.omit(year)
-x=model.matrix(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2+eco+bival,data=year)
+
+x=model.matrix(Count~bathy2+dist2+slope2+sednum+eco+bival+S.NAO2+F.NAO2+air,data=year)
 lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
 plot(lasso,xvar="lambda",label=TRUE)
 
@@ -2662,16 +2672,17 @@ logLik.glmmLasso<-function(y,mu,ranef.logLik=NULL,family,penal=FALSE, K = NULL)
   return(loglik)
 }
 lm1 <- glmmLasso(Count~bathy2+dist2+slope2+as.factor(sednum)+NAO2+wind2+wave2+as.factor(eco)+as.factor(bival), rnd = list(SrvyBgY=~1),
-                 family=poisson(link = "log"), lambda=.005, data = year)
+                 family=poisson(link = "log"), lambda=0, data = year)
 
 summary(lm1)
 lm2<- glmmLasso(Count~bathy2+dist2+slope2+as.factor(sednum)+NAO2+wind2+wave2+as.factor(eco)+as.factor(bival), rnd =list(SrvyBgY=~1),
-                 family=poisson(), lambda=100, data = year)
+                 family=poisson(), lambda=1, data = year)
 
 summary(lm2)
 
 glmmLassoControl(lm2)
 
+#Negative binomial glm testing
 is.factor(year$bival)
 year$sednum=as.factor(year$sednum)
 year$bival=as.factor(year$bival)
