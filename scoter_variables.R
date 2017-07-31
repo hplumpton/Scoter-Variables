@@ -2598,6 +2598,7 @@ year$S.NAO2=scale(year$S.NAO)
 year$S.NAO2=as.numeric(year$S.NAO2)
 year$F.NAO2=scale(year$F.NAO)
 year$F.NAO2=as.numeric(year$F.NAO2)
+year$eco=as.factor(year$eco)
 
 #pca= nao, wind, wave
 year<-na.omit(year)
@@ -2610,14 +2611,14 @@ year<-data.frame(year)
 year$SrvyBgY=as.factor(year$SrvyBgY)
 year<-na.omit(year)
 
-x=model.matrix(Count~bathy2+dist2+slope2+sednum+eco+bival+S.NAO2+F.NAO2+air,data=year)
+x=model.matrix(Count~bathy2+dist2+slope2+NAO2+sednum+eco+bival+wind2+wave2,data=year)
 lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
 plot(lasso,xvar="lambda",label=TRUE)
 
 cv.lasso=cv.glmnet(x,year$Count)
 plot(cv.lasso)
-coef(cv.lasso)
-
+coef(cv.lasso,s=5)
+# s=specifies the value(s) of λ(lambda) at which extraction is made
 
 
 
@@ -2675,7 +2676,7 @@ lm1 <- glmmLasso(Count~bathy2+dist2+slope2+as.factor(sednum)+NAO2+wind2+wave2+as
                  family=poisson(link = "log"), lambda=0, data = year)
 
 summary(lm1)
-lm2<- glmmLasso(Count~bathy2+dist2+slope2+as.factor(sednum)+NAO2+wind2+wave2+as.factor(eco)+as.factor(bival), rnd =list(SrvyBgY=~1),
+lm2<- glmmLasso(Count~bathy2+NAO2, rnd =list(SrvyBgY=~1),
                  family=poisson(), lambda=1, data = year)
 
 summary(lm2)
@@ -2686,9 +2687,10 @@ glmmLassoControl(lm2)
 is.factor(year$bival)
 year$sednum=as.factor(year$sednum)
 year$bival=as.factor(year$bival)
-m0a<-glmer.nb(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2+eco+bival+(1|SrvyBgY),data=year)
-m0<-glm.nb(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2+eco+bival,data=year)
-
+year$NAO2=scale(year$NAO)
+m0a<-glmer.nb(Count~bathy2+NAO2+(1|SrvyBgY),data=year)
+m0<-glm.nb(Count~bathy2+NAO2,data=year)
+summary(m0a)
 
 
 
