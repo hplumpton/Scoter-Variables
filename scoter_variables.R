@@ -2611,13 +2611,13 @@ year<-data.frame(year)
 year$SrvyBgY=as.factor(year$SrvyBgY)
 year<-na.omit(year)
 
-x=model.matrix(Count~bathy2+dist2+slope2+NAO2+sednum+eco+bival+wind2+wave2,data=year)
+x=model.matrix(Count~bathy2+dist2+slope2+S.NAO2+sednum+eco+bival+wind2+wave2,data=year)
 lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
 plot(lasso,xvar="lambda",label=TRUE)
 
 cv.lasso=cv.glmnet(x,year$Count)
 plot(cv.lasso)
-coef(cv.lasso,s=5)
+coef(cv.lasso,s=4)
 # s=specifies the value(s) of λ(lambda) at which extraction is made
 
 
@@ -2699,45 +2699,81 @@ summary(m0a)
 #multicollinearity
 
 sco2@data$substrate$SEDNUM=as.numeric(sco2@data$substrate$SEDNUM)
-sco2@data$eco$ECOREGION=as.numeric(sco2@data$eco$ECOREGION)
+year$eco=as.numeric(year$eco)
 sco2$bival=as.numeric(sco2$bival)
 
-cor.test(sco2$bathy,sco2$dist)
-cor.test(sco2$bathy,sco2$slope)
-cor.test(sco2$bathy,sco2@data$substrate$SEDNUM)
-cor.test(sco2$dist,sco2$slope)
-cor.test(sco2$dist,sco2@data$substrate$SEDNUM)
-cor.test(sco2$slope,sco2@data$substrate$SEDNUM)
-cor.test(sco2$bathy,sco2$NAO)
-cor.test(sco2$dist,sco2$NAO)
-cor.test(sco2$slope,sco2$NAO)
-cor.test(sco2@data$substrate$SEDNUM,sco2$NAO)
-cor.test(sco2$bathy,sco2@data$eco$ECOREGION)
-cor.test(sco2$dist,sco2@data$eco$ECOREGION)
-cor.test(sco2$slope,sco2@data$eco$ECOREGION)
-cor.test(sco2$NAO,sco2@data$eco$ECOREGION)
-cor.test(sco2@data$substrate$SEDNUM,sco2@data$eco$ECOREGION)
-cor.test(sco2$bathy,sco2$wind)
-cor.test(sco2$bathy,sco2$wave)
-cor.test(sco2$dist,sco2$wind)
-cor.test(sco2$dist,sco2$wave)
-cor.test(sco2$slope,sco2$wind)
-cor.test(sco2$slope,sco2$wave)
-cor.test(sco2@data$substrate$SEDNUM,sco2$wind)
-cor.test(sco2@data$substrate$SEDNUM,sco2$wave)
-cor.test(sco2$NAO,sco2$wind)
-cor.test(sco2$NAO,sco2$wave)
-cor.test(sco2@data$eco$ECOREGION,sco2$wind)
-cor.test(sco2@data$eco$ECOREGION,sco2$wave)
-cor.test(sco2$wind,sco2$wave)
-cor.test(sco2$bathy,sco2$bival)
-cor.test(sco2$dist,sco2$bival)
-cor.test(sco2$slope,sco2$bival)
-cor.test(sco2@data$substrate$SEDNUM,sco2$bival)
-cor.test(sco2$NAO,sco2$bival)
-cor.test(sco2@data$eco$ECOREGION,sco2$bival)
-cor.test(sco2$wind,sco2$bival)
-cor.test(sco2$wave,sco2$bival)
+cor.test(year$bathy,year$dist) #-0.090
+cor.test(year$bathy,year$slope) #0.178
+cor.test(year$bathy,year$sednum) #0.164
+cor.test(year$dist,year$slope) #0.135
+cor.test(year$dist,year$sednum) #0.047
+cor.test(year$slope,year$sednum) #-0.086
+cor.test(year$bathy,year$NAO) #0.063
+cor.test(year$dist,year$NAO) #-0.060
+cor.test(year$slope,year$NAO) #-0.0006
+cor.test(year$sednum,year$NAO) #-0.132
+cor.test(year$bathy,year$eco) #0.305
+cor.test(year$dist,year$eco) #0.013
+cor.test(year$slope,year$eco) #0.11
+cor.test(year$NAO,year$eco) #0.024
+cor.test(year$sednum,year$eco) #0.438
+cor.test(year$bathy,year$wind) #-0.006
+cor.test(year$bathy,year$wave) #-0.039
+cor.test(year$dist,year$wind) #-0.042
+cor.test(year$dist,year$wave) #0.005
+cor.test(year$slope,year$wind) #0.074
+cor.test(year$slope,year$wave) #0.045
+cor.test(year$sednum,year$wind) #0.024
+cor.test(year$sednum,year$wave) #0.287
+cor.test(year$NAO,year$wind) #-0.310
+cor.test(year$NAO,year$wave) #-0.328
+cor.test(year$eco,year$wind) #0.242
+cor.test(year$eco,year$wave) #0.226
+cor.test(year$wind,year$wave) #0.065
+cor.test(year$bathy,year$bival) #0.021
+cor.test(year$dist,year$bival) #0.097
+cor.test(year$slope,year$bival) #-0.123
+cor.test(year$sednum,year$bival) #-0.213
+cor.test(year$NAO,year$bival) #-0.030
+cor.test(year$eco,year$bival) #-0.371
+cor.test(year$wind,year$bival) #0.058
+cor.test(year$wave,year$bival) #-0.195
+cor.test(year$bathy,year$S.NAO) #-0.090
+cor.test(year$dist,year$S.NAO) #0.050
+cor.test(year$slope,year$S.NAO) #0.005
+cor.test(year$sednum,year$S.NAO) #0.093
+cor.test(year$NAO,year$S.NAO) #-0.943
+cor.test(year$eco,year$S.NAO) #-0.027
+cor.test(year$wind,year$S.NAO) #0.087
+cor.test(year$wave,year$S.NAO) #0.299
+cor.test(year$bival,year$S.NAO) #0.027
+cor.test(year$bathy,year$F.NAO) #-0.062
+cor.test(year$dist,year$F.NAO) #0.060
+cor.test(year$slope,year$F.NAO) #0.0006
+cor.test(year$sednum,year$F.NAO) #0.132
+cor.test(year$NAO,year$F.NAO) #-0.999
+cor.test(year$eco,year$F.NAO) #0.025
+cor.test(year$wind,year$F.NAO) #0.314
+cor.test(year$wave,year$F.NAO) #0.328
+cor.test(year$bival,year$F.NAO) #0.030
+cor.test(year$S.NAO,year$F.NAO) #0.942
+cor.test(year$bathy,year$air) #0.062
+cor.test(year$dist,year$air) # -0.057
+cor.test(year$slope,year$air) #-0.004
+cor.test(year$sednum,year$air) #-0.133
+cor.test(year$NAO,year$air) #0.999
+cor.test(year$eco,year$air) #-0.035
+cor.test(year$wind,year$air) #-0.347
+cor.test(year$wave,year$air) #-0.331
+cor.test(year$bival,year$air) #-0.031
+cor.test(year$S.NAO,year$air) #-0.934
+cor.test(year$F.NAO,year$air) #-0.999
+
+
+
+
+
+
 
 #LASSO
 library(glmnet)#lasso package
