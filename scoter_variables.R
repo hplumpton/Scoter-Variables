@@ -2611,15 +2611,17 @@ year<-data.frame(year)
 year$SrvyBgY=as.factor(year$SrvyBgY)
 year<-na.omit(year)
 
-x=model.matrix(Count~bathy2+dist2+slope2+S.NAO2+sednum+eco+bival+wind2+wave2,data=year)
+x=model.matrix(Count~bathy2+dist2+slope2+NAO2+sednum+eco+bival+wind2+wave2,data=year)
 lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
 plot(lasso,xvar="lambda",label=TRUE)
 
-cv.lasso=cv.glmnet(x,year$Count)
+cv.lasso=cv.glmnet(x,year$Count,family="poisson",alpha=1)
 plot(cv.lasso)
-coef(cv.lasso,s=4)
+coef(cv.lasso,s="lambda.1se")
 # s=specifies the value(s) of λ(lambda) at which extraction is made
-
+cv.lasso$lambda.min #0.04787
+cv.lasso$lambda.1se #2.614836
+cv.lasso$cvm #mean squared error values (high in the 82s)
 
 
 library(glmmLasso)
