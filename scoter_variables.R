@@ -2483,10 +2483,9 @@ data2012$NAO2=as.numeric(data2012$NAO2)
 names(scot)
 
 scot<-as.data.frame(data2012,header=TRUE)
+
 scosc<-subset(scot,y>=32.0 & y<33.75,select=id:substrate)
 coordinates(scosc)<-c("x","y")
-sconc<-subset(scot,y>=33.75,select=id:substrate)
-coordinates(sconc)<-c("x","y")
 scoga<-subset(scot,y>=30.7 & y<32.0,select=id:substrate)
 coordinates(scoga)<-c("x","y")
 scofl<-subset(scot,y<30.7, select=id:substrate)
@@ -2496,11 +2495,6 @@ coordinates(scofl)<-c("x","y")
 proj4string(scosc)<-CRS("+proj=longlat +datum=WGS84")
 scosc=spTransform(scosc,CRS(proj4string(bathy)))
 scosc$bival=extract(bival1,scosc)
-
-#north carolina
-proj4string(sconc)<-CRS("+proj=longlat +datum=WGS84")
-sconc=spTransform(sconc,CRS(proj4string(bathy)))
-sconc$bival=extract(bival2,sconc)
 
 #georgia
 proj4string(scoga)<-CRS("+proj=longlat +datum=WGS84")
@@ -2513,10 +2507,9 @@ scofl=spTransform(scofl,CRS(proj4string(bathy)))
 scofl$bival=extract(bival3,scofl)
 
 scosc$bival=as.factor(scosc@data$bival$RARNUM)
-sconc$bival=as.factor(sconc@data$bival$RARNUM)
 scoga$bival=as.factor(scoga@data$bival$RARNUM)
 scofl$bival=as.factor(scofl@data$bival$RARNUM)
-scobival<-rbind(scosc,sconc,scoga,scofl)
+scobival<-rbind(scosc,scoga,scofl)
 names(scobival)
 data2012$bival<-scobival$bival
 summary(data2012$bival)
@@ -2614,7 +2607,7 @@ coordinates(sco)<-c("x","y")
 proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
 sco=spTransform(sco,CRS(proj4string(bathy)))
 
-sco <- sco[c(-3:-34)]
+sco <- sco[c(-3:-30)]
 names(sco)
 data2012<-cbind(data2012,sco[3:6])
 
@@ -2636,13 +2629,13 @@ data2012$bival=as.factor(data2012$bival)
 
 summary(data2012)
 
-data.2012<-data.frame(data2011)
+data.2012<-data.frame(data2012)
 write.table(data.2012, "data2012.txt", sep="\t")
 
 data2012=read.csv("Grid/data2012.csv",header=TRUE)
 coordinates(data2012)<-c("x","y") 
 proj4string(data2012)<-CRS("+proj=longlat +datum=WGS84")
-data2011=spTransform(data2012,CRS(proj4string(bathy)))
+data2012=spTransform(data2012,CRS(proj4string(bathy)))
 
 grid2012=read.csv("Grid/g2012.csv",header=TRUE)
 coordinates(grid2012)<-c("x","y")
@@ -2655,7 +2648,7 @@ year2012<-rbind(data2012,grid2012)
 
 
 #Adding the fall(Sept-Nov) and summer(Jun-Aug) NAO values
-year<-rbind(year2009,year2010,year2011)
+year<-rbind(year2009,year2010,year2011,year2012)
 year<-data.frame(year)
 write.table(year, "year.txt", sep="\t")
 year=read.csv("Grid/year.csv", header=TRUE)
@@ -2677,6 +2670,7 @@ year$air<-a$scores[,1]
 library(glmnet)
 year<-data.frame(year)
 year$SrvyBgY=as.factor(year$SrvyBgY)
+year$eco=is.numeric(year$eco)
 year<-na.omit(year)
 
 x=model.matrix(Count~bathy2+dist2+slope2+NAO2+sednum+eco+bival+wind2+wave2,data=year)
@@ -2690,6 +2684,10 @@ coef(cv.lasso,s="lambda.1se")
 cv.lasso$lambda.min #0.04787
 cv.lasso$lambda.1se #2.614836
 cv.lasso$cvm #mean squared error values (high in the 82s)
+
+library(penalized)
+pen <- penalized(Count~bathy2+dist2+slope2+NAO2+sednum+eco+bival+wind2+wave2,
+                 data = year, lambda1=1, standardize=TRUE)
 
 
 library(glmmLasso)
