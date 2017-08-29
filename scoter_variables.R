@@ -2681,13 +2681,19 @@ cv.lasso=cv.glmnet(x,year$Count,family="poisson",alpha=1)
 plot(cv.lasso)
 coef(cv.lasso,s="lambda.1se")
 # s=specifies the value(s) of λ(lambda) at which extraction is made
-cv.lasso$lambda.min #0.04787
-cv.lasso$lambda.1se #2.614836
-cv.lasso$cvm #mean squared error values (high in the 82s)
+cv.lasso$lambda.min #0.07330916
+cv.lasso$lambda.1se #3.648614
+cv.lasso$cvm #mean squared error values (high in the 98s)
 
 library(penalized)
 pen <- penalized(Count~bathy2+dist2+slope2+NAO2+sednum+eco+bival+wind2+wave2,
                  data = year, lambda1=1, standardize=TRUE)
+show(pen)
+coefficients(pen)
+coefficients(pen, "penalized")
+basehaz(pen)
+plotpath(pen)
+
 
 
 library(glmmLasso)
