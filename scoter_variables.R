@@ -2673,17 +2673,27 @@ year$SrvyBgY=as.factor(year$SrvyBgY)
 year$eco=is.numeric(year$eco)
 year<-na.omit(year)
 
-x=model.matrix(Count~bathy2+dist2+slope2+NAO2+sednum+eco+bival+wind2+wave2,data=year)
+x=model.matrix(Count~bathy2+dist2+slope2+sednum+wind2+wave2+NAO2+eco+bival,data=year)
 lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
 plot(lasso,xvar="lambda",label=TRUE)
 
-cv.lasso=cv.glmnet(x,year$Count,family="poisson",alpha=1)
+cv.out <- cv.glmnet(x,year$Count,family="poisson",alpha=1)
+bestlam <- cv.out$lambda.1se
+
+lasso.pred <- predict(lasso, newx,s=bestlam,family="poisson")
+
+mean((lasso.pred-y[year])^2)
+
+lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:11,]
+lasso.coef
+
+cv.lasso=cv.glmnet(lasso,year$Count,family="poisson",alpha=1)
 plot(cv.lasso)
 coef(cv.lasso,s="lambda.1se")
 # s=specifies the value(s) of λ(lambda) at which extraction is made
-cv.lasso$lambda.min #0.07330916
-cv.lasso$lambda.1se #3.648614
-cv.lasso$cvm #mean squared error values (high in the 98s)
+cv.lasso$lambda.min #0.105359
+cv.lasso$lambda.1se #6.376057
+cv.lasso$cvm #mean squared error values (high in the 99s)
 
 library(penalized)
 pen <- penalized(Count~bathy2+dist2+slope2+NAO2+sednum+eco+bival+wind2+wave2,
@@ -2696,177 +2706,108 @@ plotpath(pen)
 
 
 
-library(glmmLasso)
-logLik.glmmLasso<-function(y,mu,ranef.logLik=NULL,family,penal=FALSE, K = NULL) 
-{
-  fam <- family$family
-  
-  if(fam=="poisson")
-    loglik <- sum(y*log(mu)-mu)
-  
-  if(fam=="binomial")
-    loglik <- sum(log(mu[y==1]))+sum(log((1-mu)[y==0]))
-  
-  if(fam=="gaussian")
-    loglik <- sum(y*mu-0.5*(mu^2))
-  
-  if(fam=="acat")
-  {
-    mu_cat <- matrix(mu, byrow = TRUE, ncol = K)
-    mu_cat <- cbind(mu_cat,1-rowSums(mu_cat))
-    yhelp <- matrix(y, byrow = TRUE, ncol = K)
-    yhelp <- cbind(yhelp,1-rowSums(yhelp))
-    loglik <- sum(yhelp*log(mu_cat))
-  }
-  
-  if(fam=="cumulative")
-  {
-    mu_cat <- matrix(mu, byrow = TRUE, ncol = K)  
-    mu_help <- mu_cat
-    
-    
-    for (i in 2:K){
-      mu_cat[,i] <- mu_help[,i]-mu_help[,i-1]
-    }
-    
-    mu_cat <- cbind(mu_cat,1-mu_help[,K])
-    
-    yhelp <- matrix(y, byrow = TRUE, ncol = K)
-    ynew <- apply(yhelp,1,match,x=1)
-    ynew[is.na(ynew)] <- K+1
-    ynew <- factor(ynew)
-    yhelp <- as.matrix(model.matrix(~0+ynew, contrasts = list(ynew = "contr.treatment")))
-    
-    loglik <- sum(yhelp*log(mu_cat))
-    loglik
-  }
-  
-  if(penal)
-    loglik <- loglik + ranef.logLik 
-  
-  return(loglik)
-}
-lm1 <- glmmLasso(Count~bathy2+dist2+slope2+as.factor(sednum)+NAO2+wind2+wave2+as.factor(eco)+as.factor(bival), rnd = list(SrvyBgY=~1),
-                 family=poisson(link = "log"), lambda=0, data = year)
-
-summary(lm1)
-lm2<- glmmLasso(Count~bathy2+NAO2, rnd =list(SrvyBgY=~1),
-                 family=poisson(), lambda=1, data = year)
-
-summary(lm2)
-
-glmmLassoControl(lm2)
-
 #Negative binomial glm testing
-is.factor(year$bival)
-year$sednum=as.factor(year$sednum)
-year$bival=as.factor(year$bival)
-year$NAO2=scale(year$NAO)
-m0a<-glmer.nb(Count~bathy2+NAO2+(1|SrvyBgY),data=year)
-m0<-glm.nb(Count~bathy2+NAO2,data=year)
-summary(m0a)
 
 
+year$sednum=as.numeric(year$sednum)
+year$bival=as.numeric(year$bival)
+
+m1<-glm(Count~bathy2+dist2+slope2+sednum+wind2+wave2, family='poisson', data=year)
+summary(m1)
+m2<-glm(Count~bathy2+dist2+slope2+sednum,family='poisson', data=year)
+summary(m2)
+
+library(lme4)
+m3<-glmer.nb(Count~bathy2+dist2+slope2+sednum+wind2+wave2+(1|SrvyBgY),data=year,control=glmerControl(optimizer="bobyqa"))
+summary(m3)
+
+m4<-glmer.nb(Count~bathy2+dist2+slope2+sednum+(1|SrvyBgY),data=year,control=glmerControl(optimizer="bobyqa"))
+summary(m4)
+
+m5<-glmer.nb(Count~bathy2+dist2+slope2+sednum+wind2+wave2+NAO2+eco+bival+(1|SrvyBgY),data=year,control=glmerControl(optimizer="bobyqa"))
+summary(m5)
+
+library(MuMIn)
+
+out.put<-model.sel(m1,m2,m3,m4,m5)
+out.put
 
 
 
 #multicollinearity
 
-sco2@data$substrate$SEDNUM=as.numeric(sco2@data$substrate$SEDNUM)
+year$sednum=as.numeric(year$sednum)
 year$eco=as.numeric(year$eco)
-sco2$bival=as.numeric(sco2$bival)
+year$bival=as.numeric(year$bival)
 
-cor.test(year$bathy,year$dist) #-0.090
-cor.test(year$bathy,year$slope) #0.178
-cor.test(year$bathy,year$sednum) #0.164
-cor.test(year$dist,year$slope) #0.135
-cor.test(year$dist,year$sednum) #0.047
-cor.test(year$slope,year$sednum) #-0.086
-cor.test(year$bathy,year$NAO) #0.063
-cor.test(year$dist,year$NAO) #-0.060
-cor.test(year$slope,year$NAO) #-0.0006
-cor.test(year$sednum,year$NAO) #-0.132
-cor.test(year$bathy,year$eco) #0.305
-cor.test(year$dist,year$eco) #0.013
-cor.test(year$slope,year$eco) #0.11
-cor.test(year$NAO,year$eco) #0.024
-cor.test(year$sednum,year$eco) #0.438
-cor.test(year$bathy,year$wind) #-0.006
-cor.test(year$bathy,year$wave) #-0.039
+cor.test(year$bathy,year$dist) #-0.075
+cor.test(year$bathy,year$slope) #0.233
+cor.test(year$bathy,year$sednum) #0.126
+cor.test(year$dist,year$slope) #0.118
+cor.test(year$dist,year$sednum) #0.036
+cor.test(year$slope,year$sednum) #-0.076
+cor.test(year$bathy,year$NAO) #0.099
+cor.test(year$dist,year$NAO) #-0.067
+cor.test(year$slope,year$NAO) #-0.007
+cor.test(year$sednum,year$NAO) #-0.161
+cor.test(year$bathy,year$eco) #0.216
+cor.test(year$dist,year$eco) #-0.008
+cor.test(year$slope,year$eco) #0.098
+cor.test(year$NAO,year$eco) #0.096
+cor.test(year$sednum,year$eco) #0.449
+cor.test(year$bathy,year$wind) #-0.040
+cor.test(year$bathy,year$wave) #-0.033
 cor.test(year$dist,year$wind) #-0.042
-cor.test(year$dist,year$wave) #0.005
-cor.test(year$slope,year$wind) #0.074
-cor.test(year$slope,year$wave) #0.045
-cor.test(year$sednum,year$wind) #0.024
-cor.test(year$sednum,year$wave) #0.287
-cor.test(year$NAO,year$wind) #-0.310
-cor.test(year$NAO,year$wave) #-0.328
-cor.test(year$eco,year$wind) #0.242
-cor.test(year$eco,year$wave) #0.226
-cor.test(year$wind,year$wave) #0.065
-cor.test(year$bathy,year$bival) #0.021
-cor.test(year$dist,year$bival) #0.097
-cor.test(year$slope,year$bival) #-0.123
-cor.test(year$sednum,year$bival) #-0.213
-cor.test(year$NAO,year$bival) #-0.030
-cor.test(year$eco,year$bival) #-0.371
-cor.test(year$wind,year$bival) #0.058
-cor.test(year$wave,year$bival) #-0.195
-cor.test(year$bathy,year$S.NAO) #-0.090
-cor.test(year$dist,year$S.NAO) #0.050
-cor.test(year$slope,year$S.NAO) #0.005
-cor.test(year$sednum,year$S.NAO) #0.093
-cor.test(year$NAO,year$S.NAO) #-0.943
-cor.test(year$eco,year$S.NAO) #-0.027
-cor.test(year$wind,year$S.NAO) #0.087
-cor.test(year$wave,year$S.NAO) #0.299
-cor.test(year$bival,year$S.NAO) #0.027
-cor.test(year$bathy,year$F.NAO) #-0.062
-cor.test(year$dist,year$F.NAO) #0.060
-cor.test(year$slope,year$F.NAO) #0.0006
-cor.test(year$sednum,year$F.NAO) #0.132
-cor.test(year$NAO,year$F.NAO) #-0.999
-cor.test(year$eco,year$F.NAO) #0.025
-cor.test(year$wind,year$F.NAO) #0.314
-cor.test(year$wave,year$F.NAO) #0.328
-cor.test(year$bival,year$F.NAO) #0.030
-cor.test(year$S.NAO,year$F.NAO) #0.942
-cor.test(year$bathy,year$air) #0.062
-cor.test(year$dist,year$air) # -0.057
-cor.test(year$slope,year$air) #-0.004
-cor.test(year$sednum,year$air) #-0.133
-cor.test(year$NAO,year$air) #0.999
-cor.test(year$eco,year$air) #-0.035
-cor.test(year$wind,year$air) #-0.347
-cor.test(year$wave,year$air) #-0.331
-cor.test(year$bival,year$air) #-0.031
-cor.test(year$S.NAO,year$air) #-0.934
-cor.test(year$F.NAO,year$air) #-0.999
+cor.test(year$dist,year$wave) #0.007
+cor.test(year$slope,year$wind) #0.054
+cor.test(year$slope,year$wave) #0.054
+cor.test(year$sednum,year$wind) #0.085
+cor.test(year$sednum,year$wave) #0.273
+cor.test(year$NAO,year$wind) #-0.398
+cor.test(year$NAO,year$wave) #-0.301
+cor.test(year$eco,year$wind) #0.302
+cor.test(year$eco,year$wave) #0.218
+cor.test(year$wind,year$wave) #0.044
+cor.test(year$bathy,year$bival) #0.045
+cor.test(year$dist,year$bival) #0.125
+cor.test(year$slope,year$bival) #-0.0614
+cor.test(year$sednum,year$bival) #-0.150
+cor.test(year$NAO,year$bival) #-0140
+cor.test(year$eco,year$bival) #-0.257
+cor.test(year$wind,year$bival) #0.213
+cor.test(year$wave,year$bival) #-0.156
+#cor.test(year$bathy,year$S.NAO) #-0.090
+#cor.test(year$dist,year$S.NAO) #0.050
+#cor.test(year$slope,year$S.NAO) #0.005
+#cor.test(year$sednum,year$S.NAO) #0.093
+#cor.test(year$NAO,year$S.NAO) #-0.943
+#cor.test(year$eco,year$S.NAO) #-0.027
+#cor.test(year$wind,year$S.NAO) #0.087
+#cor.test(year$wave,year$S.NAO) #0.299
+#cor.test(year$bival,year$S.NAO) #0.027
+#cor.test(year$bathy,year$F.NAO) #-0.062
+#cor.test(year$dist,year$F.NAO) #0.060
+#cor.test(year$slope,year$F.NAO) #0.0006
+#cor.test(year$sednum,year$F.NAO) #0.132
+#cor.test(year$NAO,year$F.NAO) #-0.999
+#cor.test(year$eco,year$F.NAO) #0.025
+#cor.test(year$wind,year$F.NAO) #0.314
+#cor.test(year$wave,year$F.NAO) #0.328
+#cor.test(year$bival,year$F.NAO) #0.030
+#cor.test(year$S.NAO,year$F.NAO) #0.942
+cor.test(year$bathy,year$air) #0.099
+cor.test(year$dist,year$air) # -0.062
+cor.test(year$slope,year$air) #-0.011
+cor.test(year$sednum,year$air) #-0.163
+cor.test(year$NAO,year$air) #0.997
+cor.test(year$eco,year$air) #-0.116
+cor.test(year$wind,year$air) #-0.457
+cor.test(year$wave,year$air) #-0.300
+cor.test(year$bival,year$air) #-0.150
+#cor.test(year$S.NAO,year$air) #-0.934
+#cor.test(year$F.NAO,year$air) #-0.999
 
 
-
-
-
-
-
-#LASSO
-library(glmnet)#lasso package
-
-sco2$sednum=as.factor(sco2@data$substrate$SEDNUM)
-sco2$substrate<-NULL
-sco2$eco=as.factor(sco2@data$eco$ECOREGION)
-sco2$bival=as.factor(sco2$bival)
-
-
-sco2<-data.frame(sco2)
-sco2 <-na.omit(sco2)
-x=model.matrix(Count~bathy2+dist2+slope2+sednum+NAO2+wind2+wave2-1,data=sco2)
-lasso<-glmnet(x,sco2$Count, family = "gaussian", alpha=1)
-plot(lasso,xvar="lambda",label=TRUE)
-
-cv.lasso=cv.glmnet(x,sco2$Count)
-plot(cv.lasso)
-coef(cv.lasso)
 
 
 
