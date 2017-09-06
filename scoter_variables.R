@@ -2648,18 +2648,18 @@ year2012<-rbind(data2012,grid2012)
 
 
 #Adding the fall(Sept-Nov) and summer(Jun-Aug) NAO values
-year<-rbind(year2009,year2010,year2011,year2012)
-year<-data.frame(year)
-write.table(year, "year.txt", sep="\t")
-year=read.csv("Grid/year.csv", header=TRUE)
-coordinates(year)<-c("x","y")
-proj4string(year)<-CRS("+proj=longlat +datum=WGS84")
-year=spTransform(year,CRS(proj4string(bathy)))
-year$S.NAO2=scale(year$S.NAO)
-year$S.NAO2=as.numeric(year$S.NAO2)
-year$F.NAO2=scale(year$F.NAO)
-year$F.NAO2=as.numeric(year$F.NAO2)
-year$eco=as.factor(year$eco)
+#year<-rbind(year2009,year2010,year2011,year2012)
+#year<-data.frame(year)
+#write.table(year, "year.txt", sep="\t")
+#year=read.csv("Grid/year.csv", header=TRUE)
+#coordinates(year)<-c("x","y")
+#proj4string(year)<-CRS("+proj=longlat +datum=WGS84")
+#year=spTransform(year,CRS(proj4string(bathy)))
+#year$S.NAO2=scale(year$S.NAO)
+#year$S.NAO2=as.numeric(year$S.NAO2)
+#year$F.NAO2=scale(year$F.NAO)
+#year$F.NAO2=as.numeric(year$F.NAO2)
+#year$eco=as.factor(year$eco)
 
 #pca= nao, wind, wave
 year<-na.omit(year)
@@ -2670,30 +2670,64 @@ year$air<-a$scores[,1]
 library(glmnet)
 year<-data.frame(year)
 year$SrvyBgY=as.factor(year$SrvyBgY)
-year$eco=is.numeric(year$eco)
+year$eco=as.numeric(year$eco)
 year<-na.omit(year)
 
-x=model.matrix(Count~bathy2+dist2+slope2+sednum+wind2+wave2+NAO2+eco+bival,data=year)
+x=model.matrix(Count~NAO2+eco+bathy2+wind2+bival+dist2+slope2+sednum+wave2,data=year)
+y=year$Count
+
+set.seed(489)
+train = sample(1:nrow(x), nrow(x)/2)
+test = (-train)
+ytest = y[test]
+
 lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
-plot(lasso,xvar="lambda",label=TRUE)
+cv.lasso=cv.glmnet(x,year$Count,family="poisson",alpha=1)
+coef(cv.lasso,s="lambda.1se")
+#removes NAO2, eco, bival, and wave2
+#keeps bathy2, dist2, slope2, wind2, and sednum
 
-cv.out <- cv.glmnet(x,year$Count,family="poisson",alpha=1)
-bestlam <- cv.out$lambda.1se
+cv.lasso$cvm
+# cv MSE is 99
+bestlam <- cv.lasso$lambda.1se
+#1se=4.823253
 
-lasso.pred <- predict(lasso, newx,s=bestlam,family="poisson")
-
-mean((lasso.pred-y[year])^2)
+lasso.pred <- predict(lasso, newx=x[test,],s=bestlam,family="poisson")
+mean((lasso.pred-ytest)^2)
+# MSE=14089.94
 
 lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:11,]
 lasso.coef
+#intercept=2.29825423, NAO=0.0, eco=0.0, bathy2= -0.10686084
+#wind2=0.07628573, bival=0.0, dist2=0.29092079, slope2=0.08500299
+#sednum=0.09368300, and wave2=0.0
 
-cv.lasso=cv.glmnet(lasso,year$Count,family="poisson",alpha=1)
-plot(cv.lasso)
+x2=model.matrix(Count~bathy2+wind2+dist2+slope2+sednum,data=year)
+y=year$Count
+
+set.seed(489)
+train = sample(1:nrow(x2), nrow(x2)/2)
+test = (-train)
+ytest = y[test]
+
+lasso<-glmnet(x2,year$Count, family = "poisson", alpha=1)
+cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
-# s=specifies the value(s) of λ(lambda) at which extraction is made
-cv.lasso$lambda.min #0.105359
-cv.lasso$lambda.1se #6.376057
-cv.lasso$cvm #mean squared error values (high in the 99s)
+
+cv.lasso$cvm
+#cv MSE is 100
+bestlam <- cv.lasso$lambda.1se
+# 1se= 6.376057
+lasso.pred <- predict(lasso, newx=x2[test,],s=bestlam,family="poisson")
+mean((lasso.pred-ytest)^2)
+# MSE =31585.11
+
+lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:7,]
+lasso.coef
+#intercept=2.72292992, bathy2=-0.09558390, wind2= 0.0, dist2= 0.24536339
+#slope2=0.01835076, sednum=0.0
+
+
 
 library(penalized)
 pen <- penalized(Count~bathy2+dist2+slope2+NAO2+sednum+eco+bival+wind2+wave2,
