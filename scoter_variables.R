@@ -105,13 +105,14 @@ sconc=spTransform(sconc,CRS(proj4string(bathy)))
 sconc$bival=extract(bival2,sconc)
 
 #florida
-bival3=rgdal::readOGR("Layers/Florida/Florida/layer/invert.shp")
-bival3<-spTransform(bival4,CRS(proj4string(bathy)))
+bival3=rgdal::readOGR("Layers/Florida/Florida/layer/inverts.shp")
+bival3<-spTransform(bival3,CRS(proj4string(bathy)))
 #plot(bival3)
 proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
 scofl=spTransform(scofl,CRS(proj4string(bathy)))
 #plot(scofl,add=TRUE)
-scofl$bival=extract(bival3,scofl)
+#scofl$bival=extract(bival3,scofl)
+scofl$bival=over(scofl,bival3)
 
 #georgia
 bival4=rgdal::readOGR("Layers/Georgia/LAYER_FILES/invert.shp")
@@ -983,7 +984,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1094,7 +1095,7 @@ SegmentSpatialLines <- function(sl, length = 0, n.parts = 0, merge.last = FALSE)
 }
 
 #example above with transect 2 added
-tran2009=coordinates(tran.sub)[[2]][[1]]
+tran2=coordinates(tran.sub)[[2]][[1]]
 
 #transects 1 & 2 as spatial lines
 sl <- SpatialLines(list(Lines(list(Line(coords = transect.locs)), 
@@ -1142,7 +1143,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1183,7 +1184,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1294,7 +1295,7 @@ SegmentSpatialLines <- function(sl, length = 0, n.parts = 0, merge.last = FALSE)
 }
 
 #example above with transect 2 added
-tran2010=coordinates(tran.sub)[[2]][[1]]
+tran2=coordinates(tran.sub)[[2]][[1]]
 
 #transects 1 & 2 as spatial lines
 sl <- SpatialLines(list(Lines(list(Line(coords = transect.locs)), 
@@ -1342,7 +1343,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1383,7 +1384,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1494,7 +1495,7 @@ SegmentSpatialLines <- function(sl, length = 0, n.parts = 0, merge.last = FALSE)
 }
 
 #example above with transect 2 added
-tran2011=coordinates(tran.sub)[[2]][[1]]
+tran2=coordinates(tran.sub)[[2]][[1]]
 
 #transects 1 & 2 as spatial lines
 sl <- SpatialLines(list(Lines(list(Line(coords = transect.locs)), 
@@ -1542,7 +1543,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1583,7 +1584,7 @@ lines=data.frame(label=1,x0=x0,x1=x1,y0=y0,y1=y1)
 
 tmp=as.psp(tran.sub[tran.sub$id==1,])
 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 plot(tran.sub[tran.sub$id==1,])
 points(strtransect$full.transects[[1]]) #not subdividing transects still
 
@@ -1694,7 +1695,7 @@ SegmentSpatialLines <- function(sl, length = 0, n.parts = 0, merge.last = FALSE)
 }
 
 #example above with transect 2 added
-tran2012=coordinates(tran.sub)[[2]][[1]]
+tran2=coordinates(tran.sub)[[2]][[1]]
 
 #transects 1 & 2 as spatial lines
 sl <- SpatialLines(list(Lines(list(Line(coords = transect.locs)), 
@@ -1742,7 +1743,7 @@ lines=data.frame(label=seq(1,length(sp.seg)),x0=x0,x1=x1,y0=y0,y1=y1)
 tmp=as.psp(sp.seg)
 #still need to figure out how to convert these files back to a spatialpolygon 
 #to sample within each one. 
-strtransect<-lines_to_strips(lines,as.owin(tmp), width=650)
+strtransect<-lines_to_strips(lines,as.owin(tmp), width=550)
 #over 50 warnings they were all the same as below
 #1: In `[<-`(`*tmp*`, i, value = gpc) :
 #implicit list embedding of S4 objects is deprecated
@@ -1766,8 +1767,6 @@ out2012=spTransform(out2012,CRS(proj4string(bathy)))
 
 #finding coordinates for grid cells
 
-out2009=SpatialPolygons(new.polys)
-proj4string(out2009)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
 out2009=spTransform(out2009,CRS(proj4string(bathy)))
 out2009$id=seq(1,4381)
 
@@ -1777,8 +1776,6 @@ c1=spTransform(c1,CRS(proj4string(bathy)))
 
 join2009=merge(out2009,c1,by="id")
 join2009<-as(join2009, "SpatialPolygonsDataFrame")
-join2009<-data.frame(join2009)
-write.table(join2009, "testjoin.txt", sep="\t")
 writeOGR(obj=join2009, dsn="tempdir", layer="join2009", driver="ESRI Shapefile")
 
 proj4string(sco2)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
@@ -1787,7 +1784,7 @@ sco2$wave2=as.numeric(sco2$wave2)
 sco2$wind2=as.numeric(sco2$wind2)
 writeOGR(obj=sco2, dsn="tempdir", layer="sco2", driver="ESRI Shapefile")
 
-grid2009=rgdal::readOGR("tempdir/grid2009.shp")
+grid2009=rgdal::readOGR("tempdir/gri2009.shp")
 grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
 
 grid.2009<-data.frame(grid2009)
@@ -1795,8 +1792,7 @@ write.table(grid.2009, "test.txt", sep="\t")
 
 
 #2010
-out2010=SpatialPolygons(new.polys)
-proj4string(out2010)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
+
 out2010=spTransform(out2010,CRS(proj4string(bathy)))
 out2010$id=seq(1,4235)
 
@@ -1815,8 +1811,7 @@ grid.2010<-data.frame(grid2010)
 write.table(grid.2010, "test2.txt", sep="\t")
 
 #2011
-out2011=SpatialPolygons(new.polys)
-proj4string(out2011)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
+
 out2011=spTransform(out2011,CRS(proj4string(bathy)))
 out2011$id=seq(1,4469)
 
@@ -1835,8 +1830,7 @@ grid.2011<-data.frame(grid2011)
 write.table(grid.2011, "test3.txt", sep="\t")
 
 #2012
-out2012=SpatialPolygons(new.polys)
-proj4string(out2012)=CRS("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +units=m +datum=NAD83 +no_defs +towgs84=0,0,0")
+
 out2012=spTransform(out2012,CRS(proj4string(bathy)))
 out2012$id=seq(1,3824)
 
@@ -1870,6 +1864,7 @@ summary(scoters2012) #277 (grid 241)
 #getting varible values for grid cells
 
 #2009
+grid2009$Count<-as.numeric(grid2009$Count)
 count.grid=aggregate(grid2009["Count"], join2009,sum)
 join2009$Count=as.numeric(count.grid$Count)
 join2009$Count[is.na(join2009$Count)]=0
@@ -1931,7 +1926,8 @@ scoga$bival=extract(bival4,scoga)
 #florida
 proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
 scofl=spTransform(scofl,CRS(proj4string(bathy)))
-scofl$bival=extract(bival3,scofl)
+#scofl$bival=extract(bival3,scofl)
+scofl$bival=over(scofl,bival3)
 
 scosc$bival=as.factor(scosc@data$bival$RARNUM)
 sconc$bival=as.factor(sconc@data$bival$RARNUM)
@@ -2057,6 +2053,7 @@ year2009<-rbind(data2009,grid2009)
 
 
 #2010
+grid2010$Count<-as.numeric(grid2010$Count)
 grid2010$Count=as.numeric(grid2010$Count)
 count.grid=aggregate(grid2010["Count"], join2010,sum)
 join2010$Count=as.numeric(count.grid$Count)
@@ -2114,7 +2111,8 @@ scoga$bival=extract(bival4,scoga)
 #florida
 proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
 scofl=spTransform(scofl,CRS(proj4string(bathy)))
-scofl$bival=extract(bival3,scofl)
+#scofl$bival=extract(bival3,scofl)
+scofl$bival=over(scofl,bival3)
 
 scosc$bival=as.factor(scosc@data$bival$RARNUM)
 sconc$bival=as.factor(sconc@data$bival$RARNUM)
@@ -2249,6 +2247,7 @@ grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
 year2010<-rbind(data2010,grid2010)
 
 #2011
+grid2011$Count<-as.numeric(grid2011$Count)
 grid2011$Count=as.numeric(grid2011$Count)
 count.grid=aggregate(grid2011["Count"], join2011,sum)
 join2011$Count=as.numeric(count.grid$Count)
@@ -2306,7 +2305,8 @@ scoga$bival=extract(bival4,scoga)
 #florida
 proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
 scofl=spTransform(scofl,CRS(proj4string(bathy)))
-scofl$bival=extract(bival3,scofl)
+#scofl$bival=extract(bival3,scofl)
+scofl$bival=over(scofl,bival3)
 
 scosc$bival=as.factor(scosc@data$bival$RARNUM)
 sconc$bival=as.factor(sconc@data$bival$RARNUM)
@@ -2452,7 +2452,7 @@ grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
 year2011<-rbind(data2011,grid2011)
 
 #2012
-
+grid2012$Count<-as.numeric(grid2012$Count)
 grid2012$Count=as.numeric(grid2012$Count)
 count.grid=aggregate(grid2012["Count"], join2012,sum)
 join2012$Count=as.numeric(count.grid$Count)
@@ -2504,7 +2504,8 @@ scoga$bival=extract(bival4,scoga)
 #florida
 proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
 scofl=spTransform(scofl,CRS(proj4string(bathy)))
-scofl$bival=extract(bival3,scofl)
+#scofl$bival=extract(bival3,scofl)
+scofl$bival=over(scofl,bival3)
 
 scosc$bival=as.factor(scosc@data$bival$RARNUM)
 scoga$bival=as.factor(scoga@data$bival$RARNUM)
@@ -2648,7 +2649,7 @@ year2012<-rbind(data2012,grid2012)
 
 
 #Adding the fall(Sept-Nov) and summer(Jun-Aug) NAO values
-#year<-rbind(year2009,year2010,year2011,year2012)
+year<-rbind(year2009,year2010,year2011,year2012)
 #year<-data.frame(year)
 #write.table(year, "year.txt", sep="\t")
 #year=read.csv("Grid/year.csv", header=TRUE)
@@ -2690,17 +2691,18 @@ coef(cv.lasso,s="lambda.1se")
 cv.lasso$cvm
 # cv MSE is 99
 bestlam <- cv.lasso$lambda.1se
-#1se=4.823253
+#1se=3.724961
 
 lasso.pred <- predict(lasso, newx=x[test,],s=bestlam,family="poisson")
 mean((lasso.pred-ytest)^2)
-# MSE=14089.94
+# MSE=20233.39
+# RMSE=142.244
 
 lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:11,]
 lasso.coef
-#intercept=2.29825423, NAO=0.0, eco=0.0, bathy2= -0.10686084
-#wind2=0.07628573, bival=0.0, dist2=0.29092079, slope2=0.08500299
-#sednum=0.09368300, and wave2=0.0
+#intercept=1.88289932, NAO=0.0, eco=0.0, bathy2= -0.09149139
+#wind2=0.06115596, bival=0.0, dist2=0.31419008, slope2=0.08479828
+#sednum=0.20577241, and wave2=0.0
 
 x2=model.matrix(Count~bathy2+wind2+dist2+slope2+sednum,data=year)
 y=year$Count
@@ -2717,16 +2719,19 @@ coef(cv.lasso,s="lambda.1se")
 cv.lasso$cvm
 #cv MSE is 100
 bestlam <- cv.lasso$lambda.1se
-# 1se= 6.376057
+# 1se= 4.088141
 lasso.pred <- predict(lasso, newx=x2[test,],s=bestlam,family="poisson")
 mean((lasso.pred-ytest)^2)
-# MSE =31585.11
+# MSE =20233.91
+# RMSE= 142.245
 
 lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:7,]
 lasso.coef
-#intercept=2.72292992, bathy2=-0.09558390, wind2= 0.0, dist2= 0.24536339
-#slope2=0.01835076, sednum=0.0
+#intercept=1.97193363, bathy2=-0.08899219, wind2= 0.03866461, dist2= 0.30334701
+#slope2=0.08098529, sednum=0.18706396
 
+hist(lasso.pred)
+hist(ytest)
 
 
 library(penalized)
@@ -2746,13 +2751,13 @@ plotpath(pen)
 year$sednum=as.numeric(year$sednum)
 year$bival=as.numeric(year$bival)
 
-m1<-glm(Count~bathy2+dist2+slope2+sednum+wind2+wave2, family='poisson', data=year)
+m1<-glm(Count~bathy2+dist2+slope2+sednum+wind2, family='poisson', data=year)
 summary(m1)
 m2<-glm(Count~bathy2+dist2+slope2+sednum,family='poisson', data=year)
 summary(m2)
 
 library(lme4)
-m3<-glmer.nb(Count~bathy2+dist2+slope2+sednum+wind2+wave2+(1|SrvyBgY),data=year,control=glmerControl(optimizer="bobyqa"))
+m3<-glmer.nb(Count~bathy2+dist2+slope2+sednum+wind2+(1|SrvyBgY),data=year,control=glmerControl(optimizer="bobyqa"))
 summary(m3)
 
 m4<-glmer.nb(Count~bathy2+dist2+slope2+sednum+(1|SrvyBgY),data=year,control=glmerControl(optimizer="bobyqa"))
