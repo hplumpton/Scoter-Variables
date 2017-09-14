@@ -2669,12 +2669,15 @@ year$air<-a$scores[,1]
 
 #testing LASSO
 library(glmnet)
+year<-rbind(year2009,year2010,year2011,year2012)
 year<-data.frame(year)
 year$SrvyBgY=as.factor(year$SrvyBgY)
-year$eco=as.numeric(year$eco)
+year$eco=as.factor(year$eco)
+year$sednum=as.factor(year$sednum)
+year$bival=as.factor(year$bival)
 year<-na.omit(year)
 
-x=model.matrix(Count~NAO2+eco+bathy2+wind2+bival+dist2+slope2+sednum+wave2,data=year)
+x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2,data=year)
 y=year$Count
 
 set.seed(489)
@@ -2685,8 +2688,8 @@ ytest = y[test]
 lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
 cv.lasso=cv.glmnet(x,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
-#removes NAO2, eco, bival, and wave2
-#keeps bathy2, dist2, slope2, wind2, and sednum
+#removes eco, wind2 and wave2
+#keeps NAO2, bathy2, dist2, slope2, and sednum (6,9)
 
 cv.lasso$cvm
 # cv MSE is 99
@@ -2698,13 +2701,15 @@ mean((lasso.pred-ytest)^2)
 # MSE=20233.39
 # RMSE=142.244
 
-lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:11,]
+lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:93,]
 lasso.coef
 #intercept=1.88289932, NAO=0.0, eco=0.0, bathy2= -0.09149139
 #wind2=0.06115596, bival=0.0, dist2=0.31419008, slope2=0.08479828
 #sednum=0.20577241, and wave2=0.0
 
-x2=model.matrix(Count~bathy2+wind2+dist2+slope2+sednum,data=year)
+#Note with year as a variable there was no difference
+
+x2=model.matrix(Count~poly(bathy2,2)+wind2+poly(dist2,2)+slope2+sednum,data=year)
 y=year$Count
 
 set.seed(489)
@@ -2720,12 +2725,12 @@ cv.lasso$cvm
 #cv MSE is 100
 bestlam <- cv.lasso$lambda.1se
 # 1se= 4.088141
-lasso.pred <- predict(lasso, newx=x2[test,],s=bestlam,family="poisson")
+lasso.pred <- predict(lasso, newx=x2[,],s=bestlam,family="poisson")
 mean((lasso.pred-ytest)^2)
 # MSE =20233.91
 # RMSE= 142.245
 
-lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:7,]
+lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:10,]
 lasso.coef
 #intercept=1.97193363, bathy2=-0.08899219, wind2= 0.03866461, dist2= 0.30334701
 #slope2=0.08098529, sednum=0.18706396
@@ -2733,17 +2738,11 @@ lasso.coef
 hist(lasso.pred)
 hist(ytest)
 
+year$pred<-lasso.pred
 
-library(penalized)
-pen <- penalized(Count~bathy2+dist2+slope2+NAO2+sednum+eco+bival+wind2+wave2,
-                 data = year, lambda1=1, standardize=TRUE)
-show(pen)
-coefficients(pen)
-coefficients(pen, "penalized")
-basehaz(pen)
-plotpath(pen)
-
-
+plot(lasso.pred)
+plot(lasso,xvar="norm",label=TRUE)
+print(lasso)
 
 #Negative binomial glm testing
 
@@ -2751,9 +2750,9 @@ plotpath(pen)
 year$sednum=as.numeric(year$sednum)
 year$bival=as.numeric(year$bival)
 
-m1<-glm(Count~bathy2+dist2+slope2+sednum+wind2, family='poisson', data=year)
+m1<-glm(Count~poly(bathy2,2)+poly(dist2,2)+slope2+sednum+poly(wind2,2), family='poisson', data=year)
 summary(m1)
-m2<-glm(Count~bathy2+dist2+slope2+sednum,family='poisson', data=year)
+m2<-glm(Count~bathy2+dist2+slope2+sednum+wind2+wave2+NAO2+eco+bival,family='poisson', data=year)
 summary(m2)
 
 library(lme4)
@@ -2948,31 +2947,37 @@ summary(m36c)
 #prediction of top model
 
 
-#slope2=seq(min(sco2$slope2), max(sco2$slope2),length=1116)
+slope2=seq(min(year$slope2), max(year$slope2),length=16233)
+bathy2=seq(min(year$slope2), max(year$slope2),length=16233)
 
-#oceanslope=predict(m10d,
-#                  data.frame(slope2=seq(min(sco2$slope2), 
-#                                       max(sco2$slope2),length=1116),
-#                             dist2=as.numeric(rep(0,1116)),
-#                             sednum=as.factor(rep(4,1116))),
-#                  type="response")
+bathmetry=predict(lasso,
+                  data.frame(bathy2=seq(min(year$bathy2), 
+                                       max(year$bathy2),length=16233),
+                             dist2=as.numeric(rep(0,16233)),
+                             slope2=as.numeric(rep(0,16233)),
+                             wind2=as.numeric(rep(0,16233)),
+                             sednum=as.factor(rep(4,16233))),
+                  type="response")
 
-#plot(y=oceanslope,x=seq(min(sco2$slope2),max(sco2$slope2),length=1116),
-#     type="l", lwd=1, xlab = "Ocean Floor Slope",
-#     ylab = "Expected Count", cex.lab=1.3)
+plot(y=bathmetry,x=seq(min(year$bathy),max(year$bathy),length=16233),
+     type="l", lwd=1, xlab = "Bathymetry (meters)",
+     ylab = "Expected Count", cex.lab=1.3)
 
-#dist2=seq(min(sco2$dist2), max(sco2$dist2), length=1116)
+year$dist2=as.numeric(year$dist2)
+dist2=seq(min(year$dist2), max(year$dist2), length=16233)
 
-#dist2shore=predict(m10d,
-#                   data.frame(dist2=seq(min(sco2$dist2), 
-#                                         max(sco2$dist2),length=1116),
-#                              slope2=as.numeric(rep(0,1116)),
-#                              sednum=as.factor(rep(4,1116))),
-#                   type="response")
+dist2shore=predict(m1,
+                   data.frame(dist2=seq(min(year$dist2), 
+                                         max(year$dist2),length=16233),
+                              bathy2=as.numeric(rep(0,16233)),
+                              slope2=as.numeric(rep(0,16233)),
+                              wind2=as.numeric(rep(0,16233)),
+                              sednum=as.factor(rep(4,16233))),
+                   type="response")
 
-#plot(y=dist2shore,x=seq(min(sco2$dist2),max(sco2$dist2),length=1116),
-#     type="l", lwd=1, xlab = "Distance to Shore",
-#     ylab = "Expected Count", cex.lab=1.3)
+plot(y=dist2shore,x=seq(min(year$dist),max(year$dist),length=16233),
+     type="l", lwd=1, xlab = "Distance to Shore (meters)",
+     ylab = "Expected Count", cex.lab=1.3)
 
 
 #transect data
@@ -3006,41 +3011,39 @@ p+geom_point(data = scoters, aes(scoters$longitude_dd,
   xlab("Longitude") +
   ylab("Latitude")
 
-#Plotting top model variables (fitted values)
-m41a<-na.omit(m41a)
-m36a<-na.omit(m36a)
-sco2<-data.frame(sco2)
-sco2<-na.omit(sco2)
+
+year<-data.frame(year)
+year<-na.omit(year)
 
 #stat_smooth(method="lm", se=TRUE)
 
-sco2$fit<-fitted(m36a)
-distance<-ggplot(sco2, aes(x=dist, y=fit))
+year$fit<-fitted(lasso)
+distance<-ggplot(year, aes(x=dist, y=pred))
 distance+geom_point()+ #x-axis is in meters
   stat_smooth(method="lm", formula=y~poly(x,2),se=TRUE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
   xlab("Distance from Shore (meters)")+
-  ylab("Number of Black Scoters")
+  ylab("Expected Count")
 
 
-nao<-ggplot(sco2, aes(x=NAO, y=fit))
-nao+geom_point()+ #x-axis is NAO values
+bath<-ggplot(year, aes(x=bathy, y=pred))
+bath+geom_point()+ #x-axis is NAO values
   stat_smooth(method="lm",formula=y~poly(x,2), se=TRUE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
-  xlab("North Atlantic Oscillation")+
-  ylab("Number of Black Scoters")
+  xlab("Bathymetry (meters)")+
+  ylab("Expected Count")
 
-sub<-ggplot(sco2, aes(x=sednum))
+sub<-ggplot(year, aes(x=sednum))
 sub+geom_bar()+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
   xlab("Substrate Type")+
-  ylab("Number of Black Scoters")
+  ylab("Expected Count")
 
 sco2$fit<-fitted(m41a)
 bath<-ggplot(sco2, aes(x=bathy, y=fit))
