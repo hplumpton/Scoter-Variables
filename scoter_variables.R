@@ -2694,55 +2694,27 @@ coef(cv.lasso,s="lambda.1se")
 cv.lasso$cvm
 # cv MSE is 99
 bestlam <- cv.lasso$lambda.1se
-#1se=3.724961
+#1se=2.224351
+
+pfit <- predict(lasso, newx=cbind(x[1:16233,1],matrix(0,16233,10)),s=bestlam,type="response")
 
 lasso.pred <- predict(lasso, newx=x[test,],s=bestlam,family="poisson")
 mean((lasso.pred-ytest)^2)
-# MSE=20233.39
+# MSE=20211.72
 # RMSE=142.244
 
-lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:93,]
+lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:96,]
 lasso.coef
-#intercept=1.88289932, NAO=0.0, eco=0.0, bathy2= -0.09149139
+#intercept=2.58339973, NAO=0.11447979, eco=0.0, bathy2= -0.09149139
 #wind2=0.06115596, bival=0.0, dist2=0.31419008, slope2=0.08479828
 #sednum=0.20577241, and wave2=0.0
 
 #Note with year as a variable there was no difference
 
-x2=model.matrix(Count~poly(bathy2,2)+wind2+poly(dist2,2)+slope2+sednum,data=year)
-y=year$Count
 
-set.seed(489)
-train = sample(1:nrow(x2), nrow(x2)/2)
-test = (-train)
-ytest = y[test]
+dat=data.frame(x=x[1:16233,6], X1=pfit)
+ggplot(data=dat,aes(x=x,y=X1)) + geom_line()
 
-lasso<-glmnet(x2,year$Count, family = "poisson", alpha=1)
-cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
-coef(cv.lasso,s="lambda.1se")
-
-cv.lasso$cvm
-#cv MSE is 100
-bestlam <- cv.lasso$lambda.1se
-# 1se= 4.088141
-lasso.pred <- predict(lasso, newx=x2[,],s=bestlam,family="poisson")
-mean((lasso.pred-ytest)^2)
-# MSE =20233.91
-# RMSE= 142.245
-
-lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:10,]
-lasso.coef
-#intercept=1.97193363, bathy2=-0.08899219, wind2= 0.03866461, dist2= 0.30334701
-#slope2=0.08098529, sednum=0.18706396
-
-hist(lasso.pred)
-hist(ytest)
-
-year$pred<-lasso.pred
-
-plot(lasso.pred)
-plot(lasso,xvar="norm",label=TRUE)
-print(lasso)
 
 #Negative binomial glm testing
 
