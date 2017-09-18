@@ -2696,9 +2696,9 @@ cv.lasso$cvm
 bestlam <- cv.lasso$lambda.1se
 #1se=2.224351
 
-pfit <- predict(lasso, newx=cbind(x[1:16233,94],matrix(0,16233,dim(x)[2]-1)),s=bestlam,type="response")
+pfit <- predict(lasso, newx=cbind(x[1:16233,3],matrix(0,16233,94)),s=bestlam,type="response")
 
-lasso.pred <- predict(lasso, newx=x[1:16233,],s=bestlam,family="poisson",type="response")
+lasso.pred <- predict(lasso, newx=x[1:16233,2],s=bestlam,family="poisson",type="response")
 mean((lasso.pred-ytest)^2)
 # MSE=20211.72
 # RMSE=142.244
@@ -2712,9 +2712,9 @@ lasso.coef
 #Note with year as a variable there was no difference
 
 
-dat=data.frame(x=x[1:16233,], X1=lasso.pred)
+dat=data.frame(x=x[1:16233,3], X1=pfit)
 ggplot(data=dat,aes(x=x,y=X1)) + geom_line()
-
+library(ggplot2)
 
 #Negative binomial glm testing
 
