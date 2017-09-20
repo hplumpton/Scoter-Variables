@@ -2696,7 +2696,9 @@ cv.lasso$cvm
 bestlam <- cv.lasso$lambda.1se
 #1se=2.224351
 
-pfit <- predict(lasso, newx=cbind(x[,1],x[,2],matrix(0,16233,dim(x)[2]-2)),s=bestlam,type="response")
+cov = matrix(c(year[,2],year[,5],year[,7],year[,9],year[,10],year[,11],year[,12],year[,14],year[,16],year[,17]), 16233, 10)
+#count, bathy2, slope2, dist2, NAO2, bival, eco, wind2, wave2, sednum
+pfit <- predict(lasso, newx=cbind(cov[,1],cov[,2],matrix(0,16233,dim(x)[2]-2)),s=bestlam,type="response")
 
 lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,2),x[,3],matrix(0,16233,92)),s=bestlam,type="response")
 mean((lasso.pred-ytest)^2)
@@ -2709,11 +2711,11 @@ lasso.coef
 #wind2=0.06115596, bival=0.0, dist2=0.31419008, slope2=0.08479828
 #sednum=0.20577241, and wave2=0.0
 
-#Note with year as a variable there was no difference
+
 
 summary(pfit)
 summary(lasso.pred)
-dat=data.frame(x=x[1:16233,3], X1=pfit)
+dat=data.frame(x=cov[1:16233,2], X1=pfit)
 ggplot(data=dat,aes(x=x,y=X1)) + geom_line()
 library(ggplot2)
 
