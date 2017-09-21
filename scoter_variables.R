@@ -2685,7 +2685,7 @@ train = sample(1:nrow(x), nrow(x)/2)
 test = (-train)
 ytest = y[test]
 
-lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
+lasso<-glmnet(cov,year$Count, family = "poisson", alpha=1)
 cv.lasso=cv.glmnet(x,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
 #removes eco, wind2 and wave2
@@ -2698,9 +2698,9 @@ bestlam <- cv.lasso$lambda.1se
 
 cov = matrix(c(year[,5],year[,7],year[,9],year[,10],year[,11],year[,12],year[,14],year[,16],year[,17]), 16233, 9)
 #bathy2, slope2, dist2, NAO2, bival, eco, wind2, wave2, sednum
-pfit <- predict(lasso, newx=cbind(cov[,1],matrix(0,16233,dim(x)[2]-1)),s=1.533159,type="response")
+pfit <- predict(lasso, newx=cbind(cov[,1],matrix(0,16233,dim(cov)[2]-1)),s=bestlam,type="response")
 
-#lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,2),x[,3],matrix(0,16233,92)),s=bestlam,type="response")
+lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,2),cov[,3],matrix(0,16233,dim(cov)[2]-3)),s=bestlam,type="response")
 mean((lasso.pred-ytest)^2)
 # MSE=20211.72
 # RMSE=142.244
@@ -2716,6 +2716,7 @@ lasso.coef
 summary(pfit)
 summary(lasso.pred)
 dat=data.frame(x=cov[1:16233,1], X1=pfit)
+dat=data.frame(x=cov[1:16233,3], X1=lasso.pred)
 ggplot(data=dat,aes(x=x,y=X1)) + geom_line()
 library(ggplot2)
 
