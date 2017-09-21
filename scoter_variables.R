@@ -2717,7 +2717,13 @@ summary(pfit)
 summary(lasso.pred)
 dat=data.frame(x=cov[1:16233,1], X1=pfit)
 dat=data.frame(x=cov[1:16233,3], X1=lasso.pred)
-ggplot(data=dat,aes(x=x,y=X1)) + geom_line()
+ggplot(data=dat,aes(x=x,y=X1)) + geom_line()+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Distance from Shore (meters)")+
+  ylab("Expected Count")
+
 library(ggplot2)
 
 #Negative binomial glm testing
