@@ -2646,26 +2646,49 @@ grid2012=spTransform(grid2012,CRS(proj4string(bathy)))
 year2012<-rbind(data2012,grid2012)
 
 
+year2009$bathy2<-scale(year2009$bathy)
+year2009$bathy2<-as.numeric(year2009$bathy2)
+year2010$bathy2<-scale(year2010$bathy)
+year2010$bathy2<-as.numeric(year2010$bathy2)
+year2011$bathy2<-scale(year2011$bathy)
+year2011$bathy2<-as.numeric(year2011$bathy2)
+year2012$bathy2<-scale(year2012$bathy)
+year2012$bathy2<-as.numeric(year2012$bathy2)
 
-
-#Adding the fall(Sept-Nov) and summer(Jun-Aug) NAO values
 year<-rbind(year2009,year2010,year2011,year2012)
-#year<-data.frame(year)
-#write.table(year, "year.txt", sep="\t")
-#year=read.csv("Grid/year.csv", header=TRUE)
-#coordinates(year)<-c("x","y")
-#proj4string(year)<-CRS("+proj=longlat +datum=WGS84")
-#year=spTransform(year,CRS(proj4string(bathy)))
-#year$S.NAO2=scale(year$S.NAO)
-#year$S.NAO2=as.numeric(year$S.NAO2)
-#year$F.NAO2=scale(year$F.NAO)
-#year$F.NAO2=as.numeric(year$F.NAO2)
-#year$eco=as.factor(year$eco)
 
-#pca= nao, wind, wave
-year<-na.omit(year)
-a<-princomp(year[c(3,13,15)])
-year$air<-a$scores[,1]
+year2009<-data.frame(year2009)
+year2009$SrvyBgY=as.factor(year2009$SrvyBgY)
+year2009$eco=as.factor(year2009$eco)
+year2009$sednum=as.factor(year2009$sednum)
+year2009$bival=as.factor(year2009$bival)
+year2009$dist2=as.numeric(year2009$dist2)
+year2009<-na.omit(year2009)
+
+year2010<-data.frame(year2010)
+year2010$SrvyBgY=as.factor(year2010$SrvyBgY)
+year2010$eco=as.factor(year2010$eco)
+year2010$sednum=as.factor(year2010$sednum)
+year2010$bival=as.factor(year2010$bival)
+year2010$dist2=as.numeric(year2010$dist2)
+year2010<-na.omit(year2010)
+
+year2011<-data.frame(year2011)
+year2011$SrvyBgY=as.factor(year2011$SrvyBgY)
+year2011$eco=as.factor(year2011$eco)
+year2011$sednum=as.factor(year2011$sednum)
+year2011$bival=as.factor(year2011$bival)
+year2011$dist2=as.numeric(year2011$dist2)
+year2011<-na.omit(year2011)
+
+year2012<-data.frame(year2012)
+year2012$SrvyBgY=as.factor(year2012$SrvyBgY)
+year2012$eco<-NULL
+year2012$sednum=as.factor(year2012$sednum)
+year2012$bival=as.factor(year2012$bival)
+year2012$dist2=as.numeric(year2012$dist2)
+year2012$NAO2=as.factor(year2012$NAO2)
+year2012<-na.omit(year2012)
 
 #testing LASSO
 library(glmnet)
@@ -2675,9 +2698,10 @@ year$SrvyBgY=as.factor(year$SrvyBgY)
 year$eco=as.factor(year$eco)
 year$sednum=as.factor(year$sednum)
 year$bival=as.factor(year$bival)
+year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
-x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2,data=year)
+x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2,data=year2012)
 y=year$Count
 
 set.seed(489)
@@ -2685,22 +2709,20 @@ train = sample(1:nrow(x), nrow(x)/2)
 test = (-train)
 ytest = y[test]
 
-lasso<-glmnet(cov,year$Count, family = "poisson", alpha=1)
-cv.lasso=cv.glmnet(x,year$Count,family="poisson",alpha=1)
+lasso<-glmnet(x,year2012$Count, family = "poisson", alpha=1)
+cv.lasso=cv.glmnet(x,year2012$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
-#removes eco, wind2 and wave2
-#keeps NAO2, bathy2, dist2, slope2, and sednum (6,9)
 
 cv.lasso$cvm
 # cv MSE is 99
 bestlam <- cv.lasso$lambda.1se
-#1se=2.224351
+#1se=1.396957
 
 cov = matrix(c(year[,5],year[,7],year[,9],year[,10],year[,11],year[,12],year[,14],year[,16],year[,17]), 16233, 9)
 #bathy2, slope2, dist2, NAO2, bival, eco, wind2, wave2, sednum
-pfit <- predict(lasso, newx=cbind(cov[,1],matrix(0,16233,dim(cov)[2]-1)),s=bestlam,type="response")
+pfit <- predict(lasso, newx=cbind(matrix(0,16233,2),cov[,3],matrix(0,16233,dim(cov)[2]-3)),s=bestlam,type="response")
 
-lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,2),cov[,3],matrix(0,16233,dim(cov)[2]-3)),s=bestlam,type="response")
+lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,4),x[,5],matrix(0,16233,dim(x)[2]-5)),s=bestlam,type="response")
 mean((lasso.pred-ytest)^2)
 # MSE=20211.72
 # RMSE=142.244
@@ -2715,8 +2737,8 @@ lasso.coef
 
 summary(pfit)
 summary(lasso.pred)
-dat=data.frame(x=cov[1:16233,1], X1=pfit)
-dat=data.frame(x=cov[1:16233,3], X1=lasso.pred)
+dat=data.frame(x=cov[1:16233,3], X1=pfit)
+dat=data.frame(x=x[1:16233,5], X1=lasso.pred)
 ggplot(data=dat,aes(x=x,y=X1)) + geom_line()+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
