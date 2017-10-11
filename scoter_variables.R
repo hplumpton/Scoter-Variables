@@ -3060,15 +3060,10 @@ bath+geom_point()+
   ylab("Estimated number of Black Scoters")
 
 
-summary(sco2$bathy)
-summary(sco2$dist)
-summary(sco2$slope)
-summary(sco2$NAO)
-summary(sco2$sednum)
+
 #3=gravel-sand, 4=sand, 5=clay-silt/sand, 6=sand-clay/silt, 
 #9=sand/silt/clay
-summary(sco2$eco)
-#20041=Virginian=400, 25042=Carolinian=518
+
 
 
 #Home range: kernel density (adehabitatHR) function getvolumeUD, h=LSCV
