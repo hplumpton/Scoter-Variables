@@ -2687,7 +2687,7 @@ year2012$eco<-NULL
 year2012$sednum=as.factor(year2012$sednum)
 year2012$bival=as.factor(year2012$bival)
 year2012$dist2=as.numeric(year2012$dist2)
-year2012$NAO2=as.factor(year2012$NAO2)
+year2012$NAO2=as.numeric(year2012$NAO2)
 year2012<-na.omit(year2012)
 
 #testing LASSO
@@ -2701,7 +2701,7 @@ year$bival=as.factor(year$bival)
 year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
-x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2,data=year2012)
+x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2,data=year)
 y=year$Count
 
 set.seed(489)
@@ -2709,8 +2709,8 @@ train = sample(1:nrow(x), nrow(x)/2)
 test = (-train)
 ytest = y[test]
 
-lasso<-glmnet(x,year2012$Count, family = "poisson", alpha=1)
-cv.lasso=cv.glmnet(x,year2012$Count,family="poisson",alpha=1)
+lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
+cv.lasso=cv.glmnet(x,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
 
 cv.lasso$cvm
