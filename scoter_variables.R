@@ -2701,7 +2701,7 @@ year$bival=as.factor(year$bival)
 year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
-x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2,data=year)
+x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2,data=year)
 y=year$Count
 
 set.seed(489)
@@ -2714,24 +2714,67 @@ cv.lasso=cv.glmnet(x,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
 
 cv.lasso$cvm
-# cv MSE is 99
+# cv MSE is 68
 bestlam <- cv.lasso$lambda.1se
-#1se=1.396957
+#1se=1.056747
 
 cov = matrix(c(year[,5],year[,7],year[,9],year[,10],year[,11],year[,12],year[,14],year[,16],year[,17]), 16233, 9)
 #bathy2, slope2, dist2, NAO2, bival, eco, wind2, wave2, sednum
-pfit <- predict(lasso, newx=cbind(matrix(0,16233,2),cov[,3],matrix(0,16233,dim(cov)[2]-3)),s=bestlam,type="response")
 
+pfit <- predict(lasso, newx=cbind(matrix(0,16233,2),cov[,3],matrix(0,16233,dim(cov)[2]-3)),s=bestlam,type="response")
 lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,4),x[,5],matrix(0,16233,dim(x)[2]-5)),s=bestlam,type="response")
+
+lasso.mod <- glmnet(x[train,], y[train], alpha = 1, lambda = bestlam)
+lasso.pred <- predict(lasso.mod, s = bestlam, newx = x[test,])
 mean((lasso.pred-ytest)^2)
-# MSE=20211.72
-# RMSE=142.244
+# MSE=17628.91
+# RMSE=132.773
+
 
 lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:96,]
 lasso.coef
 #intercept=2.58339973, NAO=0.11447979, eco=0.0, bathy2= -0.09149139
 #wind2=0.06115596, bival=0.0, dist2=0.31419008, slope2=0.08479828
 #sednum=0.20577241, and wave2=0.0
+
+#predicting using the cv.lasso
+cv.fit<-predict(cv.lasso,newx=x[1:16233,],s=bestlam)
+
+
+#attempting to create a prediction map
+x.grid=seq(-167.5,-84.5,1)
+y.grid=seq(40.75,71.75,1)
+grid.for.map=expand.grid(x.grid,y.grid)
+center_grid=data.frame(x=centers[,1],y=centers[,2])
+
+grid.for.map2=data.frame(x=grid.for.map[,1],y=grid.for.map[,2])
+y.1=cbind(center_grid,z.svd$v[,1])
+y.2=merge(grid.for.map2,y.1,all.x=T)
+eof.1=matrix(y.2[,3],length(x.grid),length(y.grid),byrow=T)
+
+image(eof.1,x=x.grid,y=y.grid,col=rev(rainbow(100,start=0,end=0.7)))
+map("world",add=T)
+map("state",add=T, col='red')
+
+
+x.ran<-seq(-81.5,-75.5,0.1)
+y.ran<-seq(28.3,36.7,0.1)
+grid<-expand.grid(x.ran,y.ran)
+names(grid)<-c("x","y")
+coordinates(grid)<-c("x","y")
+gridded(grd)<-TRUE
+fullgrid(grd)<-FALSE
+proj4string(grd)<-proj4string(bathy)
+sel = !is.na(overlay(grid, map))
+grid = grid[sel,]
+plot(grid)
+
+
+grid.2<-data.frame(x=grid[,1],y=grid[,2])
+y.1=merge(grid.2,cv.fit)
+
+map1=matrix(cv.fit,length(x.ran),length(y.grid),byrow=TRUE)
+
 
 
 
