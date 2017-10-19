@@ -2702,6 +2702,7 @@ year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
 x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2,data=year)
+x2=model.matrix(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+bival+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2,data=year)
 y=year$Count
 
 set.seed(489)
@@ -2710,7 +2711,7 @@ test = (-train)
 ytest = y[test]
 
 lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
-cv.lasso=cv.glmnet(x,year$Count,family="poisson",alpha=1)
+cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
 
 cv.lasso$cvm
@@ -2731,18 +2732,19 @@ mean((lasso.pred-ytest)^2)
 # RMSE=132.773
 
 
-lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:96,]
-lasso.coef
-#intercept=2.58339973, NAO=0.11447979, eco=0.0, bathy2= -0.09149139
-#wind2=0.06115596, bival=0.0, dist2=0.31419008, slope2=0.08479828
-#sednum=0.20577241, and wave2=0.0
+lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:100,]
+lasso.coef #same coeffiecents as cv.lasso
+
+#intercept=1.93717044, NAO=0.20354570, bathy2,2= -78.16105906
+#wind2,2=-0.99455264, dist2,2=35.74614167, sednum6= 0.09353223
+#sednum9= 1.19388539, and NAO2:dist2= -0.10344899
 
 #predicting using the cv.lasso
 cv.fit<-predict(cv.lasso,newx=x[1:16233,],s=bestlam)
 
 
 #attempting to create a prediction map
-x.grid=seq(-167.5,-84.5,1)
+x.grid=seq(-67.5,-84.5,1)
 y.grid=seq(40.75,71.75,1)
 grid.for.map=expand.grid(x.grid,y.grid)
 center_grid=data.frame(x=centers[,1],y=centers[,2])
