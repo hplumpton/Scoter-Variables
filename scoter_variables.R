@@ -185,10 +185,10 @@ coordinates(windfeb2.2009)<-c("Long","Lat")
 proj4string(windfeb2.2009)<-CRS("+proj=longlat +datum=WGS84") 
 windfeb2.2009<-spTransform(windfeb2.2009,CRS(proj4string(bathy)))
 
-x.range<-as.numeric(c(-82,-72))
-y.range<-as.numeric(c(28,39))
-grd<-expand.grid(x=seq(from=x.range[1], to=x.range[2], by =0.1),
-                           y=seq(from=y.range[1], to=y.range[2],by=0.1))
+x.range<-as.numeric(c(-82,-75))
+y.range<-as.numeric(c(28,37))
+grd<-expand.grid(x=seq(from=x.range[1], to=x.range[2], by =0.01),
+                           y=seq(from=y.range[1], to=y.range[2],by=0.01))
 
 names(grd)<-c("x","y")
 coordinates(grd)<-c("x","y")
@@ -2203,7 +2203,7 @@ sco$wa13s=scale(sco$wa13)
 sco<-as.data.frame(sco)
 sco$wind<-rowMeans(subset(sco, select = c(w7,w8,w9,w10,w11,w12,w13)), na.rm = TRUE)
 sco$wind2<-rowMeans(subset(sco, select = c(w7s,w8s,w9s,w10s,w11s,w12s,w13s)), na.rm = TRUE)
-sco$wave<-rowMeans(subset(sco, select = c(wa7,wa8,wa9,wa10,wa11,wa12,w13)), na.rm = TRUE)
+sco$wave<-rowMeans(subset(sco, select = c(wa7,wa8,wa9,wa10,wa11,wa12,wa13)), na.rm = TRUE)
 sco$wave2<-rowMeans(subset(sco, select = c(wa7s,wa8s,wa9s,wa10s,wa11s,wa12s,wa13s)), na.rm = TRUE)
 coordinates(sco)<-c("x","y")
 proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
@@ -2692,6 +2692,7 @@ year2012<-na.omit(year2012)
 
 #testing LASSO
 library(glmnet)
+
 year<-rbind(year2009,year2010,year2011,year2012)
 year<-data.frame(year)
 year$SrvyBgY=as.factor(year$SrvyBgY)
@@ -2701,34 +2702,34 @@ year$bival=as.factor(year$bival)
 year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
-x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2,data=year)
-x2=model.matrix(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+bival+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2,data=year)
+#x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2,data=year)
+x2=model.matrix(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+bival+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2,data=year)
 y=year$Count
 
 set.seed(489)
-train = sample(1:nrow(x), nrow(x)/2)
+train = sample(1:nrow(x2), nrow(x2)/2)
 test = (-train)
 ytest = y[test]
 
-lasso<-glmnet(x,year$Count, family = "poisson", alpha=1)
+lasso<-glmnet(x2,year$Count, family = "poisson", alpha=1)
 cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
 
 cv.lasso$cvm
 # cv MSE is 68
 bestlam <- cv.lasso$lambda.1se
-#1se=1.056747
+#1se=0.95157
 
 cov = matrix(c(year[,5],year[,7],year[,9],year[,10],year[,11],year[,12],year[,14],year[,16],year[,17]), 16233, 9)
 #bathy2, slope2, dist2, NAO2, bival, eco, wind2, wave2, sednum
 
 pfit <- predict(lasso, newx=cbind(matrix(0,16233,2),cov[,3],matrix(0,16233,dim(cov)[2]-3)),s=bestlam,type="response")
-lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,4),x[,5],matrix(0,16233,dim(x)[2]-5)),s=bestlam,type="response")
+lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,4),x[,5],matrix(0,16233,dim(x2)[2]-5)),s=bestlam,type="response")
 
-lasso.mod <- glmnet(x[train,], y[train], alpha = 1, lambda = bestlam)
-lasso.pred <- predict(lasso.mod, s = bestlam, newx = x[test,])
+lasso.mod <- glmnet(x2[train,], y[train], alpha = 1, lambda = bestlam)
+lasso.pred <- predict(lasso.mod, s = bestlam, newx = x2[test,])
 mean((lasso.pred-ytest)^2)
-# MSE=17628.91
+# MSE=17628.33
 # RMSE=132.773
 
 
@@ -2799,10 +2800,33 @@ library(ggplot2)
 year$sednum=as.numeric(year$sednum)
 year$bival=as.numeric(year$bival)
 
-m1<-glm(Count~poly(bathy2,2)+poly(dist2,2)+slope2+sednum+poly(wind2,2), family='poisson', data=year)
+
+x<-rnorm(100,0,1)
+b1<-2
+b0<-1
+b2<-1
+b.1<-b1*x
+x2<-x^2
+b.2<-b2*x2
+truey<-b0+b.1+b.2
+
+obsy<-rnorm(1,truey,1)
+data<-cbind(obsy,x)
+data<-data.frame(data)
+y<-lm(obsy~x+I(x^2),data=data)
+summary(y)
+y2<-lm(obsy~poly(x,2),data=data)
+summary(y2)
+y3<-lm(obsy~truey,data = data)
+summary(y3)
+
+m1<-glm(math~poly(path,2), family='poisson', data=math2)
 summary(m1)
-m2<-glm(Count~bathy2+dist2+slope2+sednum+wind2+wave2+NAO2+eco+bival,family='poisson', data=year)
+m2<-glm(math~path +I(path^2),family='poisson', data=math2)
 summary(m2)
+m3<-glm(math~path2,family='poisson', data=math2)
+summary(m3)
+
 
 library(lme4)
 m3<-glmer.nb(Count~bathy2+dist2+slope2+sednum+wind2+(1|SrvyBgY),data=year,control=glmerControl(optimizer="bobyqa"))
@@ -2816,7 +2840,7 @@ summary(m5)
 
 library(MuMIn)
 
-out.put<-model.sel(m1,m2,m3,m4,m5)
+out.put<-model.sel(m1,m2,m3)
 out.put
 
 
