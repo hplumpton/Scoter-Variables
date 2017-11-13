@@ -2702,8 +2702,8 @@ year$bival=as.factor(year$bival)
 year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
-#x=model.matrix(Count~NAO2+eco+poly(bathy2,2)+poly(wind2,2)+bival+poly(dist2,2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2,data=year)
-x2=model.matrix(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+bival+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2,data=year)
+x=model.matrix(Count~NAO+eco+bathy+I(bathy^2)+wind+I(wind^2)+bival+dist+I(dist^2)+ slope+sednum+wave+dist*NAO+dist*bathy+NAO*bathy,data=year)
+x2=model.matrix(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+bival+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY,data=year)
 y=year$Count
 
 set.seed(489)
@@ -2716,7 +2716,7 @@ cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
 
 cv.lasso$cvm
-# cv MSE is 68
+# cv MSE is 66
 bestlam <- cv.lasso$lambda.1se
 #1se=0.95157
 
@@ -2724,13 +2724,13 @@ cov = matrix(c(year[,5],year[,7],year[,9],year[,10],year[,11],year[,12],year[,14
 #bathy2, slope2, dist2, NAO2, bival, eco, wind2, wave2, sednum
 
 pfit <- predict(lasso, newx=cbind(matrix(0,16233,2),cov[,3],matrix(0,16233,dim(cov)[2]-3)),s=bestlam,type="response")
-lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,4),x[,5],matrix(0,16233,dim(x2)[2]-5)),s=bestlam,type="response")
+lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,4),x2[,5],matrix(0,16233,dim(x2)[2]-5)),s=bestlam,type="response")
 
 lasso.mod <- glmnet(x2[train,], y[train], alpha = 1, lambda = bestlam)
 lasso.pred <- predict(lasso.mod, s = bestlam, newx = x2[test,])
 mean((lasso.pred-ytest)^2)
-# MSE=17628.33
-# RMSE=132.773
+# MSE=17657.64
+# RMSE=132.882
 
 
 lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:100,]
@@ -2744,48 +2744,13 @@ lasso.coef #same coeffiecents as cv.lasso
 cv.fit<-predict(cv.lasso,newx=x[1:16233,],s=bestlam)
 
 
-#attempting to create a prediction map
-x.grid=seq(-67.5,-84.5,1)
-y.grid=seq(40.75,71.75,1)
-grid.for.map=expand.grid(x.grid,y.grid)
-center_grid=data.frame(x=centers[,1],y=centers[,2])
-
-grid.for.map2=data.frame(x=grid.for.map[,1],y=grid.for.map[,2])
-y.1=cbind(center_grid,z.svd$v[,1])
-y.2=merge(grid.for.map2,y.1,all.x=T)
-eof.1=matrix(y.2[,3],length(x.grid),length(y.grid),byrow=T)
-
-image(eof.1,x=x.grid,y=y.grid,col=rev(rainbow(100,start=0,end=0.7)))
-map("world",add=T)
-map("state",add=T, col='red')
-
-
-x.ran<-seq(-81.5,-75.5,0.1)
-y.ran<-seq(28.3,36.7,0.1)
-grid<-expand.grid(x.ran,y.ran)
-names(grid)<-c("x","y")
-coordinates(grid)<-c("x","y")
-gridded(grd)<-TRUE
-fullgrid(grd)<-FALSE
-proj4string(grd)<-proj4string(bathy)
-sel = !is.na(overlay(grid, map))
-grid = grid[sel,]
-plot(grid)
-
-
-grid.2<-data.frame(x=grid[,1],y=grid[,2])
-y.1=merge(grid.2,cv.fit)
-
-map1=matrix(cv.fit,length(x.ran),length(y.grid),byrow=TRUE)
-
-
-
 
 summary(pfit)
 summary(lasso.pred)
 dat=data.frame(x=cov[1:16233,3], X1=pfit)
-dat=data.frame(x=x[1:16233,5], X1=lasso.pred)
+dat=data.frame(x=x2[1:16233,5], X1=lasso.pred)
 ggplot(data=dat,aes(x=x,y=X1)) + geom_line()+
+  #stat_smooth(method = "lm",formula=y~poly(x,2),se=FALSE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
@@ -2794,59 +2759,10 @@ ggplot(data=dat,aes(x=x,y=X1)) + geom_line()+
 
 library(ggplot2)
 
-#Negative binomial glm testing
-
-
-year$sednum=as.numeric(year$sednum)
-year$bival=as.numeric(year$bival)
-
-
-x<-rnorm(100,0,1)
-b1<-2
-b0<-1
-b2<-1
-b.1<-b1*x
-x2<-x^2
-b.2<-b2*x2
-truey<-b0+b.1+b.2
-
-obsy<-rnorm(1,truey,1)
-data<-cbind(obsy,x)
-data<-data.frame(data)
-y<-lm(obsy~x+I(x^2),data=data)
-summary(y)
-y2<-lm(obsy~poly(x,2),data=data)
-summary(y2)
-y3<-lm(obsy~truey,data = data)
-summary(y3)
-
-m1<-glm(math~poly(path,2), family='poisson', data=math2)
-summary(m1)
-m2<-glm(math~path +I(path^2),family='poisson', data=math2)
-summary(m2)
-m3<-glm(math~path2,family='poisson', data=math2)
-summary(m3)
-
-
-library(lme4)
-m3<-glmer.nb(Count~bathy2+dist2+slope2+sednum+wind2+(1|SrvyBgY),data=year,control=glmerControl(optimizer="bobyqa"))
-summary(m3)
-
-m4<-glmer.nb(Count~bathy2+dist2+slope2+sednum+(1|SrvyBgY),data=year,control=glmerControl(optimizer="bobyqa"))
-summary(m4)
-
-m5<-glmer.nb(Count~bathy2+dist2+slope2+sednum+wind2+wave2+NAO2+eco+bival+(1|SrvyBgY),data=year,control=glmerControl(optimizer="bobyqa"))
-summary(m5)
-
-library(MuMIn)
-
-out.put<-model.sel(m1,m2,m3)
-out.put
-
 
 
 #multicollinearity
-
+year$SrvyBgY=as.numeric(year$SrvyBgY)
 year$sednum=as.numeric(year$sednum)
 year$eco=as.numeric(year$eco)
 year$bival=as.numeric(year$bival)
@@ -2865,7 +2781,7 @@ cor.test(year$bathy,year$eco) #0.216
 cor.test(year$dist,year$eco) #-0.008
 cor.test(year$slope,year$eco) #0.098
 cor.test(year$NAO,year$eco) #0.096
-cor.test(year$sednum,year$eco) #0.449
+cor.test(year$sednum,year$eco) #0.449##########
 cor.test(year$bathy,year$wind) #-0.040
 cor.test(year$bathy,year$wave) #-0.033
 cor.test(year$dist,year$wind) #-0.042
@@ -2887,37 +2803,16 @@ cor.test(year$NAO,year$bival) #-0140
 cor.test(year$eco,year$bival) #-0.257
 cor.test(year$wind,year$bival) #0.213
 cor.test(year$wave,year$bival) #-0.156
-#cor.test(year$bathy,year$S.NAO) #-0.090
-#cor.test(year$dist,year$S.NAO) #0.050
-#cor.test(year$slope,year$S.NAO) #0.005
-#cor.test(year$sednum,year$S.NAO) #0.093
-#cor.test(year$NAO,year$S.NAO) #-0.943
-#cor.test(year$eco,year$S.NAO) #-0.027
-#cor.test(year$wind,year$S.NAO) #0.087
-#cor.test(year$wave,year$S.NAO) #0.299
-#cor.test(year$bival,year$S.NAO) #0.027
-#cor.test(year$bathy,year$F.NAO) #-0.062
-#cor.test(year$dist,year$F.NAO) #0.060
-#cor.test(year$slope,year$F.NAO) #0.0006
-#cor.test(year$sednum,year$F.NAO) #0.132
-#cor.test(year$NAO,year$F.NAO) #-0.999
-#cor.test(year$eco,year$F.NAO) #0.025
-#cor.test(year$wind,year$F.NAO) #0.314
-#cor.test(year$wave,year$F.NAO) #0.328
-#cor.test(year$bival,year$F.NAO) #0.030
-#cor.test(year$S.NAO,year$F.NAO) #0.942
-cor.test(year$bathy,year$air) #0.099
-cor.test(year$dist,year$air) # -0.062
-cor.test(year$slope,year$air) #-0.011
-cor.test(year$sednum,year$air) #-0.163
-cor.test(year$NAO,year$air) #0.997
-cor.test(year$eco,year$air) #-0.116
-cor.test(year$wind,year$air) #-0.457
-cor.test(year$wave,year$air) #-0.300
-cor.test(year$bival,year$air) #-0.150
-#cor.test(year$S.NAO,year$air) #-0.934
-#cor.test(year$F.NAO,year$air) #-0.999
 
+cor.test(year$bathy,year$SrvyBgY) #0.100
+cor.test(year$dist,year$SrvyBgY) # -0.014
+cor.test(year$slope,year$SrvyBgY) #-0.014
+cor.test(year$sednum,year$SrvyBgY) #-0.137
+cor.test(year$NAO,year$SrvyBgY) #0.641#############
+cor.test(year$eco,year$SrvyBgY) #-0.222
+cor.test(year$wind,year$SrvyBgY) #-0.269
+cor.test(year$wave,year$SrvyBgY) #-0.065
+cor.test(year$bival,year$SrvyBgY) #-0.095
 
 
 
@@ -3101,14 +2996,14 @@ distance+geom_point()+ #x-axis is in meters
   ylab("Expected Count")
 
 
-bath<-ggplot(year, aes(x=bathy, y=pred))
-bath+geom_point()+ #x-axis is NAO values
-  stat_smooth(method="lm",formula=y~poly(x,2), se=TRUE)+
+bath<-ggplot(year, aes(x=dist, y=bathy, group=eco, shape=eco))
+bath+geom_point(aes(group=eco,color=eco))+
+  #x-axis is NAO values
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
-  xlab("Bathymetry (meters)")+
-  ylab("Expected Count")
+  xlab("Distance from Shore (meters)")+
+  ylab("Bathymetry (meters)")
 
 sub<-ggplot(year, aes(x=sednum))
 sub+geom_bar()+
