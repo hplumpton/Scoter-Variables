@@ -2702,8 +2702,8 @@ year$bival=as.factor(year$bival)
 year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
-x=model.matrix(Count~NAO+eco+bathy+I(bathy^2)+wind+I(wind^2)+bival+dist+I(dist^2)+ slope+sednum+wave+dist*NAO+dist*bathy+NAO*bathy,data=year)
-x2=model.matrix(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+bival+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY,data=year)
+x=model.matrix(Count~NAO+eco+bathy+I(bathy^2)+wind+I(wind^2)+dist+I(dist^2)+ slope+sednum+wave+dist*NAO+dist*bathy+NAO*bathy,data=year)
+x2=model.matrix(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY,data=year)
 y=year$Count
 
 set.seed(489)
@@ -2716,11 +2716,11 @@ cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
 
 cv.lasso$cvm
-# cv MSE is 66
+# cv MSE is 73
 bestlam <- cv.lasso$lambda.1se
-#1se=0.95157
+#1se=1.380565
 
-cov = matrix(c(year[,5],year[,7],year[,9],year[,10],year[,11],year[,12],year[,14],year[,16],year[,17]), 16233, 9)
+cov = matrix(c(year[,5],year[,7],year[,9],year[,10],year[,12],year[,14],year[,16],year[,17]), 16233, 8)
 #bathy2, slope2, dist2, NAO2, bival, eco, wind2, wave2, sednum
 
 pfit <- predict(lasso, newx=cbind(matrix(0,16233,2),cov[,3],matrix(0,16233,dim(cov)[2]-3)),s=bestlam,type="response")
@@ -2729,8 +2729,8 @@ lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,4),x2[,5],matrix(0,16233,
 lasso.mod <- glmnet(x2[train,], y[train], alpha = 1, lambda = bestlam)
 lasso.pred <- predict(lasso.mod, s = bestlam, newx = x2[test,])
 mean((lasso.pred-ytest)^2)
-# MSE=17657.64
-# RMSE=132.882
+# MSE=17726.8
+# RMSE=133.142
 
 
 lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:100,]
@@ -2828,78 +2828,6 @@ library(MASS)
 #sco2$SurveyBeginYear=as.factor(sco2$SurveyBeginYear)
 
 library(lme4)
-#m0<-glm.nb(Count~1,data=sco2,na.action='na.omit')
-#m0a<-glmer.nb(Count~1+(1|Transect)+(1|SurveyBeginYear),data=sco2,na.action='na.omit')
-#m0b<-glmer.nb(Count~1+(1|Transect),data=sco2, na.action='na.omit')
-#m0c<-glmer.nb(Count~1+(1|SurveyBeginYear),data=sco2,na.action='na.omit')
-#m1<-glmer.nb(Count~bathy2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m1a<-glm.nb(Count~bathy2, data=sco2)
-#summary(m1)
-#m2<-glmer.nb(Count~bathy2 + dist2+(1|Transect)+(1|SurveyBeginYear),data=sco2)
-#m2a<-glm.nb(Count~bathy2 + dist2,data=sco2)
-#summary(m2)
-#m3<-glmer.nb(Count~bathy2 + slope2+(1|Transect)+(1|SurveyBeginYear),data=sco2)
-#summary(m3)
-#m4<-glmer.nb(Count~bathy2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear),data = sco2,na.action='na.omit')
-#summary(m4)
-#m5<-glmer.nb(Count~bathy2 + sco2$sedmob2, data=sco2)
-#m6<-glmer.nb(Count~bathy2 + dist2 + slope2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m7<-glmer.nb(Count~bathy2 + dist2 + sco2$sedmob2, data=sco2)
-#m8<-glmer.nb(Count~bathy2 + dist2 + sco2$sednum +(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m9<-glmer.nb(Count~bathy2 + dist2 + slope2 + sco2$sedmob2, data=sco2)
-#m10<-glmer.nb(Count~dist2 + slope2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m10a<-glmer.nb(Count~poly(dist2,2)+slope2+sco2$sednum+(1|Transect)+(1|SurveyBeginYear),data=sco2)
-#m10b<-glmer.nb(Count~dist2+poly(slope2,2)+sco2$sednum+(1|Transect)+(1|SurveyBeginYear),data=sco2)
-#m10c<-glmer.nb(Count~poly(bathy2,2)+dist2+slope2+sco2$sednum+(1|Transect)+(1|SurveyBeginYear),data=sco2)
-#m10d<-glmer.nb(Count~poly(dist2,2)+ poly(slope2,2)+sednum+(1|Transect)+(1|SurveyBeginYear),data=sco2)
-#m10e<-glmer.nb(Count~poly(bathy2,2)+poly(dist2,2)+slope2+
-#                 sco2$sednum+(1|Transect)+(1|SurveyBeginYear),data=sco2)
-#m10f<-glmer.nb(Count~poly(bathy2,2)+dist2+poly(slope2,2)+
-#                 sco2$sednum+(1|Transect)+(1|SurveyBeginYear),data=sco2)
-#m10g<-glmer.nb(Count~poly(bathy2,2)+poly(dist2,2)+poly(slope2,2)+
-#                 sco2$sednum+(1|Transect)+(1|SurveyBeginYear),data=sco2)
-#m11<-glmer.nb(Count~bathy2 + dist2 + slope2 + sco2$sednum +
-#           sco2$sedmob2, data=sco2)
-#m12<-glmer.nb(Count~bathy2 + slope2 + sco2$sedmob2, data=sco2)
-#m13<-glmer.nb(Count~bathy2 + slope2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m14<-glmer.nb(Count~bathy2 + slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-#m15<-glmer.nb(Count~bathy2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-#m16<-glmer.nb(Count~dist2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#summary(m16)
-#m17<-glmer.nb(Count~dist2 + slope2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m18<-glmer.nb(Count~dist2 + sco2$sedmob2, data=sco2)
-#m19<-glmer.nb(Count~dist2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m20<-glmer.nb(Count~dist2 + slope2 + sco2$sedmob2, data=sco2)
-#m21<-glmer.nb(Count~dist2 + slope2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m22<-glmer.nb(Count~dist2 + slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-#m23<-glmer.nb(Count~dist2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-#m24<-glmer.nb(Count~slope2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m25<-glmer.nb(Count~slope2 + sco2$sedmob2, data=sco2)
-#m26<-glmer.nb(Count~slope2 + sco2$sednum+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m27<-glmer.nb(Count~slope2 + sco2$sedmob2 + sco2$sednum, data=sco2)
-#m28<-glmer.nb(Count~sco2$sedmob2, data=sco2)
-#m29<-glmer.nb(Count~sco2$sedmob2 + sco2$sednum, data=sco2)
-#m30<-glmer.nb(Count~sco2$sednum+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m31<-glmer.nb(Count~NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m32<-glmer.nb(Count~dist2+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m33<-glmer.nb(Count~slope2+NAO2+(1|Transect)+(1|SurveyBeginYear), data=sco2)
- 
-#m72a<-glmer.nb(Count~sednum+poly(NAO2,2)+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m73<-glmer.nb(Count~NAO2+eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-#m74<-glmer.nb(Count~eco+(1|Transect)+(1|SurveyBeginYear), data=sco2)
-
-#Delta AIC
-
-#Table = AIC(m10, m10a, m10b, m10d)
-#n = dim(sco2)[1]  #sample size
-# Table$df yields K, the number of parameters estimated in each model
-# Table$AIC yields the AIC value for each model
-#AICc = Table$AIC + (2*Table$df*(Table$df+1))/(n-Table$df-1) #Calculate AICc from AIC, n, and K
-#Table = cbind(Table,AICc)
-#deltaAICc = Table$AICc - min(Table$AICc) #Calculates the delta AICc values
-#Table = cbind(Table,deltaAICc)
-#Table = Table[order(Table$AICc), ]
-#Table
 
 #Weighted AIC
 library(MuMIn)
@@ -2918,34 +2846,6 @@ summary(m36c)
 slope2=seq(min(year$slope2), max(year$slope2),length=16233)
 bathy2=seq(min(year$slope2), max(year$slope2),length=16233)
 
-bathmetry=predict(lasso,
-                  data.frame(bathy2=seq(min(year$bathy2), 
-                                       max(year$bathy2),length=16233),
-                             dist2=as.numeric(rep(0,16233)),
-                             slope2=as.numeric(rep(0,16233)),
-                             wind2=as.numeric(rep(0,16233)),
-                             sednum=as.factor(rep(4,16233))),
-                  type="response")
-
-plot(y=bathmetry,x=seq(min(year$bathy),max(year$bathy),length=16233),
-     type="l", lwd=1, xlab = "Bathymetry (meters)",
-     ylab = "Expected Count", cex.lab=1.3)
-
-year$dist2=as.numeric(year$dist2)
-dist2=seq(min(year$dist2), max(year$dist2), length=16233)
-
-dist2shore=predict(m1,
-                   data.frame(dist2=seq(min(year$dist2), 
-                                         max(year$dist2),length=16233),
-                              bathy2=as.numeric(rep(0,16233)),
-                              slope2=as.numeric(rep(0,16233)),
-                              wind2=as.numeric(rep(0,16233)),
-                              sednum=as.factor(rep(4,16233))),
-                   type="response")
-
-plot(y=dist2shore,x=seq(min(year$dist),max(year$dist),length=16233),
-     type="l", lwd=1, xlab = "Distance to Shore (meters)",
-     ylab = "Expected Count", cex.lab=1.3)
 
 
 #transect data
