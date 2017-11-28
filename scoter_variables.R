@@ -67,71 +67,9 @@ sco2$dist2=as.numeric(scale(sco2$dist))
 #You'll need to add as.numeric here too
 
 
-#sediment mobility
-#624 NA's probably because they were closer to the shoreline than layer was
-#chose to drop variable
-
 #North Atlantic Oscillation
 sco2$NAO2=scale(sco2$NAO)
 sco2$NAO2=as.numeric(sco2$NAO2)
-
-#Bivalve Distribution
-scot<-as.data.frame(scoters,header=TRUE)
-scosc<-subset(scot,latitude_dd>=32.0 & latitude_dd<33.75,select=SurveyId:NAO)
-coordinates(scosc)<-c("longitude_dd","latitude_dd")
-sconc<-subset(scot,latitude_dd>=33.75,select=SurveyId:NAO)
-coordinates(sconc)<-c("longitude_dd","latitude_dd")
-scoga<-subset(scot,latitude_dd>=30.7 & latitude_dd<32.0,select=SurveyId:NAO)
-coordinates(scoga)<-c("longitude_dd","latitude_dd")
-scofl<-subset(scot,latitude_dd<30.7,select=SurveyId:NAO)
-coordinates(scofl)<-c("longitude_dd","latitude_dd")
-
-#south carolina
-bival1=rgdal::readOGR("Layers/SCarolina/Layers/invertebrates.shp")
-bival1<-spTransform(bival1,CRS(proj4string(bathy)))
-#plot(bival1)
-proj4string(scosc)<-CRS("+proj=longlat +datum=WGS84")
-scosc=spTransform(scosc,CRS(proj4string(bathy)))
-#plot(scosc,add=TRUE)
-scosc$bival=extract(bival1,scosc)
-
-#north carolina
-bival2=rgdal::readOGR("Layers/NCarolina/LAYER FILES/invert.shp")
-bival2<-spTransform(bival2,CRS(proj4string(bathy)))
-#plot(bival2)
-proj4string(sconc)<-CRS("+proj=longlat +datum=WGS84")
-sconc=spTransform(sconc,CRS(proj4string(bathy)))
-#plot(sconc,add=TRUE)
-sconc$bival=extract(bival2,sconc)
-
-#florida
-bival3=rgdal::readOGR("Layers/Florida/Florida/layer/inverts.shp")
-bival3<-spTransform(bival3,CRS(proj4string(bathy)))
-#plot(bival3)
-proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
-scofl=spTransform(scofl,CRS(proj4string(bathy)))
-#plot(scofl,add=TRUE)
-#scofl$bival=extract(bival3,scofl)
-scofl$bival=over(scofl,bival3)
-
-#georgia
-bival4=rgdal::readOGR("Layers/Georgia/LAYER_FILES/invert.shp")
-bival4<-spTransform(bival4,CRS(proj4string(bathy)))
-#plot(bival4)
-proj4string(scoga)<-CRS("+proj=longlat +datum=WGS84")
-scoga=spTransform(scoga,CRS(proj4string(bathy)))
-#plot(scoga,add=TRUE)
-scoga$bival=extract(bival4,scoga)
-
-
-scosc$bival=as.factor(scosc@data$bival$RARNUM)
-sconc$bival=as.factor(sconc@data$bival$RARNUM)
-scoga$bival=as.factor(scoga@data$bival$RARNUM)
-scofl$bival=as.factor(scofl@data$bival$RARNUM)
-scobival<-rbind(scosc,sconc,scoga,scofl)
-
-sco2<-cbind(sco2,scobival[18])
-#summary(sco2$bival)
 
 #Marine Ecoregions
 eco=rgdal::readOGR("Layers/MEOW/meow_ecos.shp")
@@ -1788,6 +1726,7 @@ grid2009=rgdal::readOGR("tempdir/gri2009.shp")
 grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
 
 grid.2009<-data.frame(grid2009)
+grid.2009<-do.call( rbind, lapply( split(grid.2009, grid.2009$tim_scs),function(df) df[sample(nrow(df), 1) , ] ))
 write.table(grid.2009, "test.txt", sep="\t")
 
 
@@ -1808,6 +1747,10 @@ grid2010=rgdal::readOGR("tempdir/grid2010.shp")
 grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
 
 grid.2010<-data.frame(grid2010)
+
+grid.2010<-do.call( rbind, lapply( split(grid.2010, grid.2010$tim_scs),function(df) df[sample(nrow(df), 1) , ] ))
+
+
 write.table(grid.2010, "test2.txt", sep="\t")
 
 #2011
@@ -1827,6 +1770,8 @@ grid2011=rgdal::readOGR("tempdir/grid2011.shp")
 grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
 
 grid.2011<-data.frame(grid2011)
+grid.2011<-do.call( rbind, lapply( split(grid.2011, grid.2011$tim_scs),function(df) df[sample(nrow(df), 1) , ] ))
+
 write.table(grid.2011, "test3.txt", sep="\t")
 
 #2012
@@ -1846,24 +1791,21 @@ grid2012=rgdal::readOGR("tempdir/grid2012.shp")
 grid2012=spTransform(grid2012,CRS(proj4string(bathy)))
 
 grid.2012<-data.frame(grid2012)
+grid.2012<-do.call( rbind, lapply( split(grid.2012, grid.2012$tim_scs),function(df) df[sample(nrow(df), 1) , ] ))
+
 write.table(grid.2012, "test4.txt", sep="\t")
-
-#subseting scoter data by year
-
-scoters2009<-subset(sco2, SurveyBeginYear==2009, select=SurveyId:sednum)
-scoters2010<-subset(sco2, SurveyBeginYear==2010, select=SurveyId:sednum)
-scoters2011<-subset(sco2, SurveyBeginYear==2011, select=SurveyId:sednum)
-scoters2012<-subset(sco2, SurveyBeginYear==2012, select=SurveyId:sednum)
-
-summary(scoters2012) #277 (grid 241)
-
-#MISSING POINTS NOT SURE WHY OR HOW
 
 
 
 #getting varible values for grid cells
 
 #2009
+
+grid2009<-read.csv("Grid/gr2009.csv")
+coordinates(grid2009)<-c("y","x") 
+proj4string(grid2009)<-CRS("+proj=longlat +datum=WGS84") 
+grid2009=spTransform(grid2009,CRS(proj4string(bathy))) 
+
 grid2009$Count<-as.numeric(grid2009$Count)
 count.grid=aggregate(grid2009["Count"], join2009,sum)
 join2009$Count=as.numeric(count.grid$Count)
@@ -1896,47 +1838,6 @@ data2009$NAO2=-0.3057961
 data2009$NAO2=as.numeric(data2009$NAO2)
 #will not scale need to look into
 
-names(scot)
-
-scot<-as.data.frame(data2009,header=TRUE)
-scosc<-subset(scot,y>=32.0 & y<33.75,select=id:substrate)
-coordinates(scosc)<-c("x","y")
-sconc<-subset(scot,y>=33.75,select=id:substrate)
-coordinates(sconc)<-c("x","y")
-scoga<-subset(scot,y>=30.7 & y<32.0,select=id:substrate)
-coordinates(scoga)<-c("x","y")
-scofl<-subset(scot,y<30.7, select=id:substrate)
-coordinates(scofl)<-c("x","y")
-
-#south carolina
-proj4string(scosc)<-CRS("+proj=longlat +datum=WGS84")
-scosc=spTransform(scosc,CRS(proj4string(bathy)))
-scosc$bival=extract(bival1,scosc)
-
-#north carolina
-proj4string(sconc)<-CRS("+proj=longlat +datum=WGS84")
-sconc=spTransform(sconc,CRS(proj4string(bathy)))
-sconc$bival=extract(bival2,sconc)
-
-#georgia
-proj4string(scoga)<-CRS("+proj=longlat +datum=WGS84")
-scoga=spTransform(scoga,CRS(proj4string(bathy)))
-scoga$bival=extract(bival4,scoga)
-
-#florida
-proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
-scofl=spTransform(scofl,CRS(proj4string(bathy)))
-#scofl$bival=extract(bival3,scofl)
-scofl$bival=over(scofl,bival3)
-
-scosc$bival=as.factor(scosc@data$bival$RARNUM)
-sconc$bival=as.factor(sconc@data$bival$RARNUM)
-scoga$bival=as.factor(scoga@data$bival$RARNUM)
-scofl$bival=as.factor(scofl@data$bival$RARNUM)
-scobival<-rbind(scosc,sconc,scoga,scofl)
-names(scobival)
-data2009$bival<-scobival$bival
-summary(data2009$bival)
 
 data2009$eco=over(data2009, ecoregion)
 
@@ -2053,6 +1954,12 @@ year2009<-rbind(data2009,grid2009)
 
 
 #2010
+grid2010<-read.csv("Grid/gr2010.csv")
+coordinates(grid2010)<-c("y","x") 
+proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84") 
+grid2010=spTransform(grid2010,CRS(proj4string(bathy))) 
+
+
 grid2010$Count<-as.numeric(grid2010$Count)
 grid2010$Count=as.numeric(grid2010$Count)
 count.grid=aggregate(grid2010["Count"], join2010,sum)
@@ -2081,47 +1988,6 @@ data2010$NAO2=-1.2221421
 data2010$NAO2=as.numeric(data2010$NAO2)
 #will not scale need to look into
 
-names(scot)
-
-scot<-as.data.frame(data2010,header=TRUE)
-scosc<-subset(scot,y>=32.0 & y<33.75,select=id:substrate)
-coordinates(scosc)<-c("x","y")
-sconc<-subset(scot,y>=33.75,select=id:substrate)
-coordinates(sconc)<-c("x","y")
-scoga<-subset(scot,y>=30.7 & y<32.0,select=id:substrate)
-coordinates(scoga)<-c("x","y")
-scofl<-subset(scot,y<30.7, select=id:substrate)
-coordinates(scofl)<-c("x","y")
-
-#south carolina
-proj4string(scosc)<-CRS("+proj=longlat +datum=WGS84")
-scosc=spTransform(scosc,CRS(proj4string(bathy)))
-scosc$bival=extract(bival1,scosc)
-
-#north carolina
-proj4string(sconc)<-CRS("+proj=longlat +datum=WGS84")
-sconc=spTransform(sconc,CRS(proj4string(bathy)))
-sconc$bival=extract(bival2,sconc)
-
-#georgia
-proj4string(scoga)<-CRS("+proj=longlat +datum=WGS84")
-scoga=spTransform(scoga,CRS(proj4string(bathy)))
-scoga$bival=extract(bival4,scoga)
-
-#florida
-proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
-scofl=spTransform(scofl,CRS(proj4string(bathy)))
-#scofl$bival=extract(bival3,scofl)
-scofl$bival=over(scofl,bival3)
-
-scosc$bival=as.factor(scosc@data$bival$RARNUM)
-sconc$bival=as.factor(sconc@data$bival$RARNUM)
-scoga$bival=as.factor(scoga@data$bival$RARNUM)
-scofl$bival=as.factor(scofl@data$bival$RARNUM)
-scobival<-rbind(scosc,sconc,scoga,scofl)
-names(scobival)
-data2010$bival<-scobival$bival
-summary(data2010$bival)
 
 data2010$eco=over(data2010, ecoregion)
 
@@ -2247,6 +2113,11 @@ grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
 year2010<-rbind(data2010,grid2010)
 
 #2011
+grid2011<-read.csv("Grid/gr2011.csv")
+coordinates(grid2011)<-c("y","x") 
+proj4string(grid2011)<-CRS("+proj=longlat +datum=WGS84") 
+grid2011=spTransform(grid2011,CRS(proj4string(bathy))) 
+
 grid2011$Count<-as.numeric(grid2011$Count)
 grid2011$Count=as.numeric(grid2011$Count)
 count.grid=aggregate(grid2011["Count"], join2011,sum)
@@ -2275,47 +2146,6 @@ data2011$NAO2=1.2431077
 data2011$NAO2=as.numeric(data2011$NAO2)
 #will not scale need to look into
 
-names(scot)
-
-scot<-as.data.frame(data2011,header=TRUE)
-scosc<-subset(scot,y>=32.0 & y<33.75,select=id:substrate)
-coordinates(scosc)<-c("x","y")
-sconc<-subset(scot,y>=33.75,select=id:substrate)
-coordinates(sconc)<-c("x","y")
-scoga<-subset(scot,y>=30.7 & y<32.0,select=id:substrate)
-coordinates(scoga)<-c("x","y")
-scofl<-subset(scot,y<30.7, select=id:substrate)
-coordinates(scofl)<-c("x","y")
-
-#south carolina
-proj4string(scosc)<-CRS("+proj=longlat +datum=WGS84")
-scosc=spTransform(scosc,CRS(proj4string(bathy)))
-scosc$bival=extract(bival1,scosc)
-
-#north carolina
-proj4string(sconc)<-CRS("+proj=longlat +datum=WGS84")
-sconc=spTransform(sconc,CRS(proj4string(bathy)))
-sconc$bival=extract(bival2,sconc)
-
-#georgia
-proj4string(scoga)<-CRS("+proj=longlat +datum=WGS84")
-scoga=spTransform(scoga,CRS(proj4string(bathy)))
-scoga$bival=extract(bival4,scoga)
-
-#florida
-proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
-scofl=spTransform(scofl,CRS(proj4string(bathy)))
-#scofl$bival=extract(bival3,scofl)
-scofl$bival=over(scofl,bival3)
-
-scosc$bival=as.factor(scosc@data$bival$RARNUM)
-sconc$bival=as.factor(sconc@data$bival$RARNUM)
-scoga$bival=as.factor(scoga@data$bival$RARNUM)
-scofl$bival=as.factor(scofl@data$bival$RARNUM)
-scobival<-rbind(scosc,sconc,scoga,scofl)
-names(scobival)
-data2011$bival<-scobival$bival
-summary(data2011$bival)
 
 data2011$eco=over(data2011, ecoregion)
 
@@ -2452,6 +2282,11 @@ grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
 year2011<-rbind(data2011,grid2011)
 
 #2012
+grid2012<-read.csv("Grid/gr2012.csv")
+coordinates(grid2012)<-c("y","x") 
+proj4string(grid2012)<-CRS("+proj=longlat +datum=WGS84") 
+grid2012=spTransform(grid2012,CRS(proj4string(bathy))) 
+
 grid2012$Count<-as.numeric(grid2012$Count)
 grid2012$Count=as.numeric(grid2012$Count)
 count.grid=aggregate(grid2012["Count"], join2012,sum)
@@ -2480,40 +2315,6 @@ data2012$NAO2=0.6880134
 data2012$NAO2=as.numeric(data2012$NAO2)
 #will not scale need to look into
 
-names(scot)
-
-scot<-as.data.frame(data2012,header=TRUE)
-
-scosc<-subset(scot,y>=32.0 & y<33.75,select=id:substrate)
-coordinates(scosc)<-c("x","y")
-scoga<-subset(scot,y>=30.7 & y<32.0,select=id:substrate)
-coordinates(scoga)<-c("x","y")
-scofl<-subset(scot,y<30.7, select=id:substrate)
-coordinates(scofl)<-c("x","y")
-
-#south carolina
-proj4string(scosc)<-CRS("+proj=longlat +datum=WGS84")
-scosc=spTransform(scosc,CRS(proj4string(bathy)))
-scosc$bival=extract(bival1,scosc)
-
-#georgia
-proj4string(scoga)<-CRS("+proj=longlat +datum=WGS84")
-scoga=spTransform(scoga,CRS(proj4string(bathy)))
-scoga$bival=extract(bival4,scoga)
-
-#florida
-proj4string(scofl)<-CRS("+proj=longlat +datum=WGS84")
-scofl=spTransform(scofl,CRS(proj4string(bathy)))
-#scofl$bival=extract(bival3,scofl)
-scofl$bival=over(scofl,bival3)
-
-scosc$bival=as.factor(scosc@data$bival$RARNUM)
-scoga$bival=as.factor(scoga@data$bival$RARNUM)
-scofl$bival=as.factor(scofl@data$bival$RARNUM)
-scobival<-rbind(scosc,scoga,scofl)
-names(scobival)
-data2012$bival<-scobival$bival
-summary(data2012$bival)
 
 data2012$eco=over(data2012, ecoregion)
 
@@ -2711,6 +2512,7 @@ train = sample(1:nrow(x2), nrow(x2)/2)
 test = (-train)
 ytest = y[test]
 
+lasso2<-glmnet(x,year$Count, family = "poisson", alpha=1)
 lasso<-glmnet(x2,year$Count, family = "poisson", alpha=1)
 cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
@@ -2721,10 +2523,10 @@ bestlam <- cv.lasso$lambda.1se
 #1se=1.380565
 
 cov = matrix(c(year[,5],year[,7],year[,9],year[,10],year[,12],year[,14],year[,16],year[,17]), 16233, 8)
-#bathy2, slope2, dist2, NAO2, bival, eco, wind2, wave2, sednum
+#bathy2, slope2, dist2, NAO2, eco, wind2, wave2, sednum
+pfit <- predict(lasso, newx=cbind(matrix(0,16233,4),cov[,5],matrix(0,16233,dim(cov)[2]-5)),s=bestlam,type="response")
 
-pfit <- predict(lasso, newx=cbind(matrix(0,16233,2),cov[,3],matrix(0,16233,dim(cov)[2]-3)),s=bestlam,type="response")
-lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,4),x2[,5],matrix(0,16233,dim(x2)[2]-5)),s=bestlam,type="response")
+lasso.pred <- predict(lasso2, newx=cbind(matrix(0,16233,8),x[,9],matrix(0,16233,dim(x)[2]-9)),s=bestlam,type="response")
 
 lasso.mod <- glmnet(x2[train,], y[train], alpha = 1, lambda = bestlam)
 lasso.pred <- predict(lasso.mod, s = bestlam, newx = x2[test,])
@@ -2747,19 +2549,19 @@ cv.fit<-predict(cv.lasso,newx=x[1:16233,],s=bestlam)
 
 summary(pfit)
 summary(lasso.pred)
-dat=data.frame(x=cov[1:16233,3], X1=pfit)
-dat=data.frame(x=x2[1:16233,5], X1=lasso.pred)
-ggplot(data=dat,aes(x=x,y=X1)) + geom_line()+
-  #stat_smooth(method = "lm",formula=y~poly(x,2),se=FALSE)+
+dat=data.frame(x=cov[1:16233,5], X1=pfit)
+dat=data.frame(x=x[1:16233,9], X1=lasso.pred)
+ggplot(data=dat,aes(x=x,y=X1)) +# geom_line()+
+  stat_smooth(method = "lm",formula=y~poly(x,2),se=FALSE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
-  xlab("Distance from Shore (meters)")+
-  ylab("Expected Count")
+  xlab("Distance to Shore (meters)")+
+  ylab("Black Scoter Abundance")
 
 library(ggplot2)
 
-
+a<-subset(year,Count>0)
 
 #multicollinearity
 year$SrvyBgY=as.numeric(year$SrvyBgY)
@@ -2869,16 +2671,19 @@ tranbox<-make_bbox(lon=scoters$longitude_dd, lat = scoters$latitude_dd,
 map<-get_map(location=tranbox, maptype = "terrain", source = 'google',
              color='color')
 
-p<-ggmap(map)
+p<-ggplot()
 p+geom_point(data = scoters, aes(scoters$longitude_dd, 
                                  scoters$latitude_dd,
                                 col=scoters$SurveyBeginYear,size=Count)) +
   scale_color_brewer(palette = "Set1", name="Year")+
   scale_size_continuous(breaks = c(1, 1000, 2000, 3000, 4000, 5000))+
   theme(legend.position = c(.8,.22), legend.box = "horizontal")+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
   xlab("Longitude") +
   ylab("Latitude")
-
+map("state",add=TRUE)
 
 year<-data.frame(year)
 year<-na.omit(year)
