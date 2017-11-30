@@ -1796,22 +1796,29 @@ grid.2012<-do.call( rbind, lapply( split(grid.2012, grid.2012$tim_scs),function(
 write.table(grid.2012, "test4.txt", sep="\t")
 
 
-
+library(plyr)
 #getting varible values for grid cells
 
 #2009
 
 grid2009<-read.csv("Grid/gr2009.csv")
-coordinates(grid2009)<-c("y","x") 
-proj4string(grid2009)<-CRS("+proj=longlat +datum=WGS84") 
-grid2009=spTransform(grid2009,CRS(proj4string(bathy))) 
 
-grid2009$Count<-as.numeric(grid2009$Count)
-count.grid=aggregate(grid2009["Count"], join2009,sum)
-join2009$Count=as.numeric(count.grid$Count)
-join2009$Count[is.na(join2009$Count)]=0
-data2009<-merge(join2009,grid2009,by="id")
+a<-ddply(grid2009,.(id),summarize,sum=sum(Count),number=length(id))
+a2009<-merge(grid2009,a, by="id")
+grid2009<-do.call( rbind, lapply( split(a2009, a2009$id),function(df) df[sample(nrow(df), 1) , ] ))
+
+coordinates(grid2009)<-c("y","x")
+proj4string(grid2009)<-CRS("+proj=longlat +datum=WGS84")
+grid2009=spTransform(grid2009,CRS(proj4string(bathy))) 
+data2009<-merge(join2009,grid2009, by="id")
+data2009$FID_join20<-NULL
+data2009$Count<-NULL
+data2009$number<-NULL
+data2009$Count<-data2009$sum
+data2009$sum<-NULL
 data2009$Count[is.na(data2009$Count)]=0
+data2009$SrvyBgY=2009
+
 
 #names(data2009)
 #coordinates(data2009)<-c("longitude_dd","latitude_dd") 
@@ -1933,47 +1940,37 @@ data2009$dist2=as.numeric(data2009$dist2)
 data2009$sednum=as.factor(data2009@data$substrate$SEDNUM)
 data2009$substrate<-NULL
 data2009$eco=as.factor(data2009@data$eco$ECOREGION)
-data2009$bival=as.factor(data2009$bival)
 
-summary(data2009)
+#summary(data2009)
 
-data.2009<-data.frame(data2009)
-write.table(data.2009, "data2009.txt", sep="\t")
+year2009<-data2009
 
-data2009=read.csv("Grid/data2009.csv",header=TRUE)
-coordinates(data2009)<-c("x","y") 
-proj4string(data2009)<-CRS("+proj=longlat +datum=WGS84")
-data2009=spTransform(data2009,CRS(proj4string(bathy)))
 
-grid2009=read.csv("Grid/g2009.csv",header=TRUE)
-coordinates(grid2009)<-c("x","y")
-proj4string(grid2009)<-CRS("+proj=longlat +datum=WGS84")
-grid2009=spTransform(grid2009,CRS(proj4string(bathy)))
-
-year2009<-rbind(data2009,grid2009)
 
 
 #2010
 grid2010<-read.csv("Grid/gr2010.csv")
-coordinates(grid2010)<-c("y","x") 
-proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84") 
+
+a<-ddply(grid2010,.(id),summarize,sum=sum(Count),number=length(id))
+a2010<-merge(grid2010,a, by="id")
+grid2010<-do.call( rbind, lapply( split(a2010, a2010$id),function(df) df[sample(nrow(df), 1) , ] ))
+
+coordinates(grid2010)<-c("y","x")
+proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84")
 grid2010=spTransform(grid2010,CRS(proj4string(bathy))) 
-
-
-grid2010$Count<-as.numeric(grid2010$Count)
-grid2010$Count=as.numeric(grid2010$Count)
-count.grid=aggregate(grid2010["Count"], join2010,sum)
-join2010$Count=as.numeric(count.grid$Count)
-join2010$Count[is.na(join2010$Count)]=0
-data2010<-merge(join2010,grid2010,by="id")
+data2010<-merge(join2010,grid2010, by="id")
+data2010$FID_join20<-NULL
+data2010$Count<-NULL
+data2010$number<-NULL
+data2010$Count<-data2010$sum
+data2010$sum<-NULL
 data2010$Count[is.na(data2010$Count)]=0
+data2010$SrvyBgY=2010
 
 data2010$NAO=-3.924
 
 data2010$bathy=extract(bathy,data2010,fun=mean)
 data2010$bathy=as.numeric(data2010$bathy)
-data2010$bathy2=scale(data2010$bathy)
-data2010$bathy2=as.numeric(data2010$bathy2)
 
 #data2010$substrate=extract(substrate,data2010, fun=mean)
 data2010$substrate=over(data2010,substrate)
@@ -1983,10 +1980,8 @@ data2010$slope=as.numeric(data2010$slope)
 data2010$slope2=scale(data2010$slope)
 data2010$slope2=as.numeric(data2010$slope2)
 
-data2010$NAO2=scale(data2010$NAO)
 data2010$NAO2=-1.2221421
 data2010$NAO2=as.numeric(data2010$NAO2)
-#will not scale need to look into
 
 
 data2010$eco=over(data2010, ecoregion)
@@ -2076,7 +2071,7 @@ proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
 sco=spTransform(sco,CRS(proj4string(bathy)))
 
 sco <- sco[c(-3:-29)]
-names(sco)
+#names(sco)
 data2010<-cbind(data2010,sco[4:7])
 
 
@@ -2093,45 +2088,35 @@ data2010$dist2=as.numeric(data2010$dist2)
 data2010$sednum=as.factor(data2010@data$substrate$SEDNUM)
 data2010$substrate<-NULL
 data2010$eco=as.factor(data2010@data$eco$ECOREGION)
-data2010$bival=as.factor(data2010$bival)
 
-summary(data2010)
+#summary(data2010)
 
-data.2010<-data.frame(data2010)
-write.table(data.2010, "data2010.txt", sep="\t")
-
-data2010=read.csv("Grid/data2010.csv",header=TRUE)
-coordinates(data2010)<-c("x","y") 
-proj4string(data2010)<-CRS("+proj=longlat +datum=WGS84")
-data2010=spTransform(data2010,CRS(proj4string(bathy)))
-
-grid2010=read.csv("Grid/g2010.csv",header=TRUE)
-coordinates(grid2010)<-c("x","y")
-proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84")
-grid2010=spTransform(grid2010,CRS(proj4string(bathy)))
-
-year2010<-rbind(data2010,grid2010)
+year2010<-data2010
 
 #2011
+
 grid2011<-read.csv("Grid/gr2011.csv")
+
+a<-ddply(grid2011,.(id),summarize,sum=sum(Count),number=length(id))
+a2011<-merge(grid2011,a, by="id")
+grid2011<-do.call( rbind, lapply( split(a2011, a2011$id),function(df) df[sample(nrow(df), 1) , ] ))
+
 coordinates(grid2011)<-c("y","x") 
 proj4string(grid2011)<-CRS("+proj=longlat +datum=WGS84") 
 grid2011=spTransform(grid2011,CRS(proj4string(bathy))) 
-
-grid2011$Count<-as.numeric(grid2011$Count)
-grid2011$Count=as.numeric(grid2011$Count)
-count.grid=aggregate(grid2011["Count"], join2011,sum)
-join2011$Count=as.numeric(count.grid$Count)
-join2011$Count[is.na(join2011$Count)]=0
-data2011<-merge(join2011,grid2011,by="id")
+data2011<-merge(join2011,grid2011, by="id")
+data2011$FID_join20<-NULL
+data2011$Count<-NULL
+data2011$number<-NULL
+data2011$Count<-data2011$sum
+data2011$sum<-NULL
 data2011$Count[is.na(data2011$Count)]=0
+data2011$SrvyBgY=2011
 
 data2011$NAO=2.791
 
 data2011$bathy=extract(bathy,data2011,fun=mean)
 data2011$bathy=as.numeric(data2011$bathy)
-data2011$bathy2=scale(data2011$bathy)
-data2011$bathy2=as.numeric(data2011$bathy2)
 
 #data2011$substrate=extract(substrate,data2011, fun=mean)
 data2011$substrate=over(data2011,substrate)
@@ -2141,10 +2126,8 @@ data2011$slope=as.numeric(data2011$slope)
 data2011$slope2=scale(data2011$slope)
 data2011$slope2=as.numeric(data2011$slope2)
 
-data2011$NAO2=scale(data2011$NAO)
 data2011$NAO2=1.2431077
 data2011$NAO2=as.numeric(data2011$NAO2)
-#will not scale need to look into
 
 
 data2011$eco=over(data2011, ecoregion)
@@ -2245,7 +2228,7 @@ proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
 sco=spTransform(sco,CRS(proj4string(bathy)))
 
 sco <- sco[c(-3:-34)]
-names(sco)
+#names(sco)
 data2011<-cbind(data2011,sco[3:6])
 
 
@@ -2262,45 +2245,37 @@ data2011$dist2=as.numeric(data2011$dist2)
 data2011$sednum=as.factor(data2011@data$substrate$SEDNUM)
 data2011$substrate<-NULL
 data2011$eco=as.factor(data2011@data$eco$ECOREGION)
-data2011$bival=as.factor(data2011$bival)
 
-summary(data2011)
+#summary(data2011)
 
-data.2011<-data.frame(data2011)
-write.table(data.2011, "data2011.txt", sep="\t")
 
-data2011=read.csv("Grid/data2011.csv",header=TRUE)
-coordinates(data2011)<-c("x","y") 
-proj4string(data2011)<-CRS("+proj=longlat +datum=WGS84")
-data2011=spTransform(data2011,CRS(proj4string(bathy)))
-
-grid2011=read.csv("Grid/g2011.csv",header=TRUE)
-coordinates(grid2011)<-c("x","y")
-proj4string(grid2011)<-CRS("+proj=longlat +datum=WGS84")
-grid2011=spTransform(grid2011,CRS(proj4string(bathy)))
-
-year2011<-rbind(data2011,grid2011)
+year2011<-data2011
 
 #2012
 grid2012<-read.csv("Grid/gr2012.csv")
+
+a<-ddply(grid2012,.(id),summarize,sum=sum(Count),number=length(id))
+a2012<-merge(grid2012,a, by="id")
+grid2012<-do.call( rbind, lapply( split(a2012, a2012$id),function(df) df[sample(nrow(df), 1) , ] ))
+
 coordinates(grid2012)<-c("y","x") 
 proj4string(grid2012)<-CRS("+proj=longlat +datum=WGS84") 
 grid2012=spTransform(grid2012,CRS(proj4string(bathy))) 
 
-grid2012$Count<-as.numeric(grid2012$Count)
-grid2012$Count=as.numeric(grid2012$Count)
-count.grid=aggregate(grid2012["Count"], join2012,sum)
-join2012$Count=as.numeric(count.grid$Count)
-join2012$Count[is.na(join2012$Count)]=0
-data2012<-merge(join2012,grid2012,by="id")
+data2012<-merge(join2012,grid2012, by="id")
+data2012$FID_join20<-NULL
+data2012$Count<-NULL
+data2012$number<-NULL
+data2012$Count<-data2012$sum
+data2012$sum<-NULL
 data2012$Count[is.na(data2012$Count)]=0
+data2012$SrvyBgY=2012
+
 
 data2012$NAO=1.279
 
 data2012$bathy=extract(bathy,data2012,fun=mean)
 data2012$bathy=as.numeric(data2012$bathy)
-data2012$bathy2=scale(data2012$bathy)
-data2012$bathy2=as.numeric(data2012$bathy2)
 
 #data2012$substrate=extract(substrate,data2012, fun=mean)
 data2012$substrate=over(data2012,substrate)
@@ -2310,10 +2285,8 @@ data2012$slope=as.numeric(data2012$slope)
 data2012$slope2=scale(data2012$slope)
 data2012$slope2=as.numeric(data2012$slope2)
 
-data2012$NAO2=scale(data2012$NAO)
 data2012$NAO2=0.6880134
 data2012$NAO2=as.numeric(data2012$NAO2)
-#will not scale need to look into
 
 
 data2012$eco=over(data2012, ecoregion)
@@ -2410,7 +2383,7 @@ proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
 sco=spTransform(sco,CRS(proj4string(bathy)))
 
 sco <- sco[c(-3:-30)]
-names(sco)
+#names(sco)
 data2012<-cbind(data2012,sco[3:6])
 
 
@@ -2427,24 +2400,11 @@ data2012$dist2=as.numeric(data2012$dist2)
 data2012$sednum=as.factor(data2012@data$substrate$SEDNUM)
 data2012$substrate<-NULL
 data2012$eco=as.factor(data2012@data$eco$ECOREGION)
-data2012$bival=as.factor(data2012$bival)
 
-summary(data2012)
 
-data.2012<-data.frame(data2012)
-write.table(data.2012, "data2012.txt", sep="\t")
+#summary(data2012)
 
-data2012=read.csv("Grid/data2012.csv",header=TRUE)
-coordinates(data2012)<-c("x","y") 
-proj4string(data2012)<-CRS("+proj=longlat +datum=WGS84")
-data2012=spTransform(data2012,CRS(proj4string(bathy)))
-
-grid2012=read.csv("Grid/g2012.csv",header=TRUE)
-coordinates(grid2012)<-c("x","y")
-proj4string(grid2012)<-CRS("+proj=longlat +datum=WGS84")
-grid2012=spTransform(grid2012,CRS(proj4string(bathy)))
-
-year2012<-rbind(data2012,grid2012)
+year2012<-data2012
 
 
 year2009$bathy2<-scale(year2009$bathy)
@@ -2499,7 +2459,6 @@ year<-data.frame(year)
 year$SrvyBgY=as.factor(year$SrvyBgY)
 year$eco=as.factor(year$eco)
 year$sednum=as.factor(year$sednum)
-year$bival=as.factor(year$bival)
 year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
