@@ -1820,11 +1820,6 @@ data2009$Count[is.na(data2009$Count)]=0
 data2009$SrvyBgY=2009
 
 
-#names(data2009)
-#coordinates(data2009)<-c("longitude_dd","latitude_dd") 
-#proj4string(data2009)<-CRS("+proj=longlat +datum=WGS84")
-#data2009=spTransform(data2009,CRS(proj4string(bathy)))
-
 data2009$NAO=-1.428
 
 data2009$bathy=extract(bathy,data2009,fun=mean)
@@ -1922,8 +1917,8 @@ coordinates(sco)<-c("x","y")
 proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
 sco=spTransform(sco,CRS(proj4string(bathy)))
 
-sco <- sco[c(-3:-26)]
 names(sco)
+sco <- sco[c(-3:-25)]
 data2009<-cbind(data2009,sco[3:6])
 
 
@@ -2070,9 +2065,10 @@ coordinates(sco)<-c("x","y")
 proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
 sco=spTransform(sco,CRS(proj4string(bathy)))
 
-sco <- sco[c(-3:-29)]
-#names(sco)
-data2010<-cbind(data2010,sco[4:7])
+
+names(sco)
+sco <- sco[c(-3:-30)]
+data2010<-cbind(data2010,sco[3:6])
 
 
 data2010<-as.data.frame(data2010)
@@ -2228,7 +2224,7 @@ proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
 sco=spTransform(sco,CRS(proj4string(bathy)))
 
 sco <- sco[c(-3:-34)]
-#names(sco)
+names(sco)
 data2011<-cbind(data2011,sco[3:6])
 
 
@@ -2382,8 +2378,8 @@ coordinates(sco)<-c("x","y")
 proj4string(sco)<-CRS("+proj=longlat +datum=WGS84")
 sco=spTransform(sco,CRS(proj4string(bathy)))
 
+names(sco)
 sco <- sco[c(-3:-30)]
-#names(sco)
 data2012<-cbind(data2012,sco[3:6])
 
 
@@ -2422,7 +2418,6 @@ year2009<-data.frame(year2009)
 year2009$SrvyBgY=as.factor(year2009$SrvyBgY)
 year2009$eco=as.factor(year2009$eco)
 year2009$sednum=as.factor(year2009$sednum)
-year2009$bival=as.factor(year2009$bival)
 year2009$dist2=as.numeric(year2009$dist2)
 year2009<-na.omit(year2009)
 
@@ -2430,7 +2425,6 @@ year2010<-data.frame(year2010)
 year2010$SrvyBgY=as.factor(year2010$SrvyBgY)
 year2010$eco=as.factor(year2010$eco)
 year2010$sednum=as.factor(year2010$sednum)
-year2010$bival=as.factor(year2010$bival)
 year2010$dist2=as.numeric(year2010$dist2)
 year2010<-na.omit(year2010)
 
@@ -2438,7 +2432,6 @@ year2011<-data.frame(year2011)
 year2011$SrvyBgY=as.factor(year2011$SrvyBgY)
 year2011$eco=as.factor(year2011$eco)
 year2011$sednum=as.factor(year2011$sednum)
-year2011$bival=as.factor(year2011$bival)
 year2011$dist2=as.numeric(year2011$dist2)
 year2011<-na.omit(year2011)
 
@@ -2446,7 +2439,6 @@ year2012<-data.frame(year2012)
 year2012$SrvyBgY=as.factor(year2012$SrvyBgY)
 year2012$eco<-NULL
 year2012$sednum=as.factor(year2012$sednum)
-year2012$bival=as.factor(year2012$bival)
 year2012$dist2=as.numeric(year2012$dist2)
 year2012$NAO2=as.numeric(year2012$NAO2)
 year2012<-na.omit(year2012)
@@ -2463,7 +2455,7 @@ year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
 x=model.matrix(Count~NAO+eco+bathy+I(bathy^2)+wind+I(wind^2)+dist+I(dist^2)+ slope+sednum+wave+dist*NAO+dist*bathy+NAO*bathy,data=year)
-x2=model.matrix(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY,data=year)
+x2=model.matrix(Count~eco+NAO2+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY,data=year)
 y=year$Count
 
 set.seed(489)
