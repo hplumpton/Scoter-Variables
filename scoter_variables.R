@@ -1953,12 +1953,14 @@ grid2010<-do.call( rbind, lapply( split(a2010, a2010$id),function(df) df[sample(
 coordinates(grid2010)<-c("y","x")
 proj4string(grid2010)<-CRS("+proj=longlat +datum=WGS84")
 grid2010=spTransform(grid2010,CRS(proj4string(bathy))) 
-data2010<-merge(join2010,grid2010, by="id")
+data2010<-merge(join2010,grid2010, by="id",all=TRUE)
 data2010$FID_join20<-NULL
 data2010$Count<-NULL
 data2010$number<-NULL
 data2010$Count<-data2010$sum
 data2010$sum<-NULL
+data2010$x.y<-NULL
+data2010$y.y<-NULL
 data2010$Count[is.na(data2010$Count)]=0
 data2010$SrvyBgY=2010
 
@@ -2067,12 +2069,12 @@ sco=spTransform(sco,CRS(proj4string(bathy)))
 
 
 names(sco)
-sco <- sco[c(-3:-30)]
-data2010<-cbind(data2010,sco[3:6])
+sco <- sco[c(-2:-29)]
+data2010<-cbind(data2010,sco[2:5])
 
 
 data2010<-as.data.frame(data2010)
-coordinates(data2010)<-c("x","y")
+coordinates(data2010)<-c("x.x","y.x")
 proj4string(data2010)<-CRS("+proj=longlat +datum=WGS84")
 data2010=spTransform(data2010,CRS(proj4string(bathy)))
 dist<-distanceFromPoints(seshoreline,data2010)
@@ -2102,9 +2104,9 @@ proj4string(grid2011)<-CRS("+proj=longlat +datum=WGS84")
 grid2011=spTransform(grid2011,CRS(proj4string(bathy))) 
 data2011<-merge(join2011,grid2011, by="id")
 data2011$FID_join20<-NULL
-data2011$Count<-NULL
+
 data2011$number<-NULL
-data2011$Count<-data2011$sum
+
 data2011$sum<-NULL
 data2011$Count[is.na(data2011$Count)]=0
 data2011$SrvyBgY=2011
@@ -2260,10 +2262,13 @@ grid2012=spTransform(grid2012,CRS(proj4string(bathy)))
 
 data2012<-merge(join2012,grid2012, by="id")
 data2012$FID_join20<-NULL
-data2012$Count<-NULL
+data2012$Count.x<-NULL
 data2012$number<-NULL
 data2012$Count<-data2012$sum
 data2012$sum<-NULL
+data2012$Count.y<-NULL
+data2012$x.y<-NULL
+data2012$y.y<-NULL
 data2012$Count[is.na(data2012$Count)]=0
 data2012$SrvyBgY=2012
 
@@ -2384,7 +2389,7 @@ data2012<-cbind(data2012,sco[3:6])
 
 
 data2012<-as.data.frame(data2012)
-coordinates(data2012)<-c("x","y")
+coordinates(data2012)<-c("x.x","y.x")
 proj4string(data2012)<-CRS("+proj=longlat +datum=WGS84")
 data2012=spTransform(data2012,CRS(proj4string(bathy)))
 dist<-distanceFromPoints(seshoreline,data2012)
@@ -2397,6 +2402,24 @@ data2012$sednum=as.factor(data2012@data$substrate$SEDNUM)
 data2012$substrate<-NULL
 data2012$eco=as.factor(data2012@data$eco$ECOREGION)
 
+
+#data formatting
+
+data.2010<-data.frame(data2010)
+write.table(data.2010, "data2010.txt", sep="\t")
+
+data2010=read.csv("Grid/data2010.csv",header=TRUE)
+coordinates(data2010)<-c("x","y") 
+proj4string(data2010)<-CRS("+proj=longlat +datum=WGS84")
+data2010=spTransform(data2010,CRS(proj4string(bathy)))
+
+data.2012<-data.frame(data2012)
+write.table(data.2012, "data2012.txt", sep="\t")
+
+data2012=read.csv("Grid/data2012.csv",header=TRUE)
+coordinates(data2012)<-c("x","y") 
+proj4string(data2012)<-CRS("+proj=longlat +datum=WGS84")
+data2012=spTransform(data2012,CRS(proj4string(bathy)))
 
 #summary(data2012)
 
@@ -2448,15 +2471,19 @@ library(glmnet)
 
 year<-rbind(year2009,year2010,year2011,year2012)
 year<-data.frame(year)
-year$SrvyBgY=as.factor(year$SrvyBgY)
-year$eco=as.factor(year$eco)
-year$sednum=as.factor(year$sednum)
+year2$SrvyBgY=as.factor(year2$SrvyBgY)
+year2$eco=as.factor(year2$eco)
+year2$sednum=as.factor(year2$sednum)
 year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
+
+year2<-read.csv("year.csv")
+
 x=model.matrix(Count~NAO+eco+bathy+I(bathy^2)+wind+I(wind^2)+dist+I(dist^2)+ slope+sednum+wave+dist*NAO+dist*bathy+NAO*bathy,data=year)
-x2=model.matrix(Count~eco+NAO2+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY,data=year)
-y=year$Count
+
+x2=model.matrix(Count~NAO2+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY+eco,data=year2)
+y=year2$Count
 
 set.seed(489)
 train = sample(1:nrow(x2), nrow(x2)/2)
@@ -2464,25 +2491,28 @@ test = (-train)
 ytest = y[test]
 
 lasso2<-glmnet(x,year$Count, family = "poisson", alpha=1)
-lasso<-glmnet(x2,year$Count, family = "poisson", alpha=1)
-cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
+lasso<-glmnet(x2,year2$Count, family = "poisson", alpha=1)
+cv.lasso=cv.glmnet(x2,year2$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
 
-cv.lasso$cvm
-# cv MSE is 73
-bestlam <- cv.lasso$lambda.1se
-#1se=1.380565
+cv.lasso$cvsd
+# cv MSE is 25
+bestlam <- cv.lasso$lambda.min
+#1se=1.944182
+#min=0.007319722
+#halfway between = 0.968431139
 
-cov = matrix(c(year[,5],year[,7],year[,9],year[,10],year[,12],year[,14],year[,16],year[,17]), 16233, 8)
-#bathy2, slope2, dist2, NAO2, eco, wind2, wave2, sednum
-pfit <- predict(lasso, newx=cbind(matrix(0,16233,4),cov[,5],matrix(0,16233,dim(cov)[2]-5)),s=bestlam,type="response")
+cov = matrix(c(year2[,5],year2[,7],year2[,9],year2[,10],year2[,12],year2[,14],year2[,16],year2[,17]), 16233, 8)
+#slope2,NAO2, eco, dist2, sednum wind2, wave2, bathy2
 
-lasso.pred <- predict(lasso2, newx=cbind(matrix(0,16233,8),x[,9],matrix(0,16233,dim(x)[2]-9)),s=bestlam,type="response")
+pfit <- predict(lasso, newx=cbind(cov[,1],matrix(0,16233,dim(cov)[2]-1)),s=bestlam,type="response")
+
+lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,2),x2[,3],matrix(0,16233,dim(x2)[2]-3)),s=bestlam,type="response")
 
 lasso.mod <- glmnet(x2[train,], y[train], alpha = 1, lambda = bestlam)
 lasso.pred <- predict(lasso.mod, s = bestlam, newx = x2[test,])
 mean((lasso.pred-ytest)^2)
-# MSE=17726.8
+# MSE=2394.163
 # RMSE=133.142
 
 
@@ -2496,23 +2526,35 @@ lasso.coef #same coeffiecents as cv.lasso
 #predicting using the cv.lasso
 cv.fit<-predict(cv.lasso,newx=x[1:16233,],s=bestlam)
 
+n<-1e4
+bhat<-x2%*%beta
+b<-1*bhat+1*rnorm(n)
+
+lmod2<-summary(lm(y~scale(x2)-1))
+lmod_ses<-data.frame(lmod[4])
+
+library(boot)
+bs<-function(data, b, forumla){
+  d<-data[b,]
+    return(lm(d[,2]~d[,4],data = d)$coef[2])
+}
+results<-boot(data=year, statistic = bs, R=1000)
 
 
+library(ggplot2)
 summary(pfit)
 summary(lasso.pred)
-dat=data.frame(x=cov[1:16233,5], X1=pfit)
-dat=data.frame(x=x[1:16233,9], X1=lasso.pred)
-ggplot(data=dat,aes(x=x,y=X1)) +# geom_line()+
+dat=data.frame(x=cov[1:16233,1], X1=pfit)
+dat=data.frame(x=x[1:16233,3], X1=lasso.pred)
+ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
   stat_smooth(method = "lm",formula=y~poly(x,2),se=FALSE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
-  xlab("Distance to Shore (meters)")+
+  xlab("Bathymetry (meters)")+
   ylab("Black Scoter Abundance")
 
-library(ggplot2)
 
-a<-subset(year,Count>0)
 
 #multicollinearity
 year$SrvyBgY=as.numeric(year$SrvyBgY)
@@ -2641,14 +2683,14 @@ year<-na.omit(year)
 
 #stat_smooth(method="lm", se=TRUE)
 
-year$fit<-fitted(lasso)
-distance<-ggplot(year, aes(x=dist, y=pred))
-distance+geom_point()+ #x-axis is in meters
-  stat_smooth(method="lm", formula=y~poly(x,2),se=TRUE)+
+year2$fit<-lasso.pred
+distance<-ggplot(year2, aes(x=bathy2, y=Count))
+distance+geom_point(aes(group=SrvyBgY,color=SrvyBgY))+#x-axis is in meters
+  stat_smooth(method="lm", formula=y~poly(x,2),se=FALSE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
-  xlab("Distance from Shore (meters)")+
+  xlab("Bathymetry (meters)")+
   ylab("Expected Count")
 
 
