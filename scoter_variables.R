@@ -2469,21 +2469,23 @@ year2012<-na.omit(year2012)
 #testing LASSO
 library(glmnet)
 
-year<-rbind(year2009,year2010,year2011,year2012)
+#write.table(year, "year.txt", sep="\t")
+year<-read.csv("year.csv")
+#year<-rbind(year2009,year2010,year2011,year2012)
 year<-data.frame(year)
-year2$SrvyBgY=as.factor(year2$SrvyBgY)
-year2$eco=as.factor(year2$eco)
-year2$sednum=as.factor(year2$sednum)
+year$SrvyBgY=as.factor(year$SrvyBgY)
+year$eco=as.factor(year$eco)
+year$sednum=as.factor(year$sednum)
 year$dist2=as.numeric(year$dist2)
 year<-na.omit(year)
 
 
-year2<-read.csv("year.csv")
 
+#non scaled data
 x=model.matrix(Count~NAO+eco+bathy+I(bathy^2)+wind+I(wind^2)+dist+I(dist^2)+ slope+sednum+wave+dist*NAO+dist*bathy+NAO*bathy,data=year)
-
-x2=model.matrix(Count~NAO2+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY+eco,data=year2)
-y=year2$Count
+#scaled data
+x2=model.matrix(Count~NAO2+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY+eco,data=year)
+y=year$Count
 
 set.seed(489)
 train = sample(1:nrow(x2), nrow(x2)/2)
@@ -2491,23 +2493,23 @@ test = (-train)
 ytest = y[test]
 
 lasso2<-glmnet(x,year$Count, family = "poisson", alpha=1)
-lasso<-glmnet(x2,year2$Count, family = "poisson", alpha=1)
-cv.lasso=cv.glmnet(x2,year2$Count,family="poisson",alpha=1)
+lasso<-glmnet(x2,year$Count, family = "poisson", alpha=1)
+cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s="lambda.1se")
 
-cv.lasso$cvsd
+cv.lasso$cvm
 # cv MSE is 25
 bestlam <- cv.lasso$lambda.min
 #1se=1.944182
 #min=0.007319722
 #halfway between = 0.968431139
 
-cov = matrix(c(year2[,5],year2[,7],year2[,9],year2[,10],year2[,12],year2[,14],year2[,16],year2[,17]), 16233, 8)
+cov = matrix(c(year[,7],year[,8],year[,9],year[,11],year[,12],year[,14],year[,16],year[,17]), 16733, 8)
 #slope2,NAO2, eco, dist2, sednum wind2, wave2, bathy2
 
-pfit <- predict(lasso, newx=cbind(cov[,1],matrix(0,16233,dim(cov)[2]-1)),s=bestlam,type="response")
+pfit <- predict(lasso, newx=cbind(cov[,1],matrix(0,16733,dim(cov)[2]-1)),s=bestlam,type="response")
 
-lasso.pred <- predict(lasso, newx=cbind(matrix(0,16233,2),x2[,3],matrix(0,16233,dim(x2)[2]-3)),s=bestlam,type="response")
+lasso.pred <- predict(lasso, newx=cbind(matrix(0,16733,2),x2[,3],matrix(0,16733,dim(x2)[2]-3)),s=bestlam,type="response")
 
 lasso.mod <- glmnet(x2[train,], y[train], alpha = 1, lambda = bestlam)
 lasso.pred <- predict(lasso.mod, s = bestlam, newx = x2[test,])
@@ -2515,16 +2517,23 @@ mean((lasso.pred-ytest)^2)
 # MSE=2394.163
 # RMSE=133.142
 
-
-lasso.coef  <- predict(lasso, type = 'coefficients', s = bestlam)[1:100,]
-lasso.coef #same coeffiecents as cv.lasso
-
-#intercept=1.93717044, NAO=0.20354570, bathy2,2= -78.16105906
-#wind2,2=-0.99455264, dist2,2=35.74614167, sednum6= 0.09353223
-#sednum9= 1.19388539, and NAO2:dist2= -0.10344899
-
 #predicting using the cv.lasso
-cv.fit<-predict(cv.lasso,newx=x[1:16233,],s=bestlam)
+
+library(ggplot2)
+summary(pfit)
+summary(lasso.pred)
+dat=data.frame(x=cov[1:16233,1], X1=pfit)
+dat=data.frame(x=x[1:16233,3], X1=lasso.pred)
+ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
+  stat_smooth(method = "lm",formula=y~poly(x,2),se=FALSE)+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Bathymetry (meters)")+
+  ylab("Black Scoter Abundance")
+
+
+#Getting Standard Errors through bootstrapping (in progress)
 
 n<-1e4
 bhat<-x2%*%beta
@@ -2541,18 +2550,6 @@ bs<-function(data, b, forumla){
 results<-boot(data=year, statistic = bs, R=1000)
 
 
-library(ggplot2)
-summary(pfit)
-summary(lasso.pred)
-dat=data.frame(x=cov[1:16233,1], X1=pfit)
-dat=data.frame(x=x[1:16233,3], X1=lasso.pred)
-ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
-  stat_smooth(method = "lm",formula=y~poly(x,2),se=FALSE)+
-  theme(panel.background = element_rect(colour = 'black', fill='white'))+
-  theme(axis.title.x=element_text(size=15, color = "black"))+
-  theme(axis.title.y=element_text(size=15, color = "black"))+
-  xlab("Bathymetry (meters)")+
-  ylab("Black Scoter Abundance")
 
 
 
@@ -2560,54 +2557,44 @@ ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
 year$SrvyBgY=as.numeric(year$SrvyBgY)
 year$sednum=as.numeric(year$sednum)
 year$eco=as.numeric(year$eco)
-year$bival=as.numeric(year$bival)
 
-cor.test(year$bathy,year$dist) #-0.075
-cor.test(year$bathy,year$slope) #0.233
-cor.test(year$bathy,year$sednum) #0.126
-cor.test(year$dist,year$slope) #0.118
-cor.test(year$dist,year$sednum) #0.036
-cor.test(year$slope,year$sednum) #-0.076
-cor.test(year$bathy,year$NAO) #0.099
-cor.test(year$dist,year$NAO) #-0.067
-cor.test(year$slope,year$NAO) #-0.007
-cor.test(year$sednum,year$NAO) #-0.161
-cor.test(year$bathy,year$eco) #0.216
-cor.test(year$dist,year$eco) #-0.008
-cor.test(year$slope,year$eco) #0.098
-cor.test(year$NAO,year$eco) #0.096
-cor.test(year$sednum,year$eco) #0.449##########
-cor.test(year$bathy,year$wind) #-0.040
-cor.test(year$bathy,year$wave) #-0.033
-cor.test(year$dist,year$wind) #-0.042
-cor.test(year$dist,year$wave) #0.007
-cor.test(year$slope,year$wind) #0.054
-cor.test(year$slope,year$wave) #0.054
-cor.test(year$sednum,year$wind) #0.085
-cor.test(year$sednum,year$wave) #0.273
-cor.test(year$NAO,year$wind) #-0.398
-cor.test(year$NAO,year$wave) #-0.301
-cor.test(year$eco,year$wind) #0.302
-cor.test(year$eco,year$wave) #0.218
-cor.test(year$wind,year$wave) #0.044
-cor.test(year$bathy,year$bival) #0.045
-cor.test(year$dist,year$bival) #0.125
-cor.test(year$slope,year$bival) #-0.0614
-cor.test(year$sednum,year$bival) #-0.150
-cor.test(year$NAO,year$bival) #-0140
-cor.test(year$eco,year$bival) #-0.257
-cor.test(year$wind,year$bival) #0.213
-cor.test(year$wave,year$bival) #-0.156
+cor.test(year$bathy,year$dist) #-0.186
+cor.test(year$bathy,year$slope) #0.181
+cor.test(year$bathy,year$sednum) #0.112
+cor.test(year$dist,year$slope) #0.078
+cor.test(year$dist,year$sednum) #-0.095
+cor.test(year$slope,year$sednum) #-0.067
+cor.test(year$bathy,year$NAO) #0.091
+cor.test(year$dist,year$NAO) #-0.012
+cor.test(year$slope,year$NAO) #-0.034
+cor.test(year$sednum,year$NAO) #-0.069
+cor.test(year$bathy,year$eco) #0.190
+cor.test(year$dist,year$eco) #-0.108
+cor.test(year$slope,year$eco) #0.200
+cor.test(year$NAO,year$eco) #-0.092
+cor.test(year$sednum,year$eco) #0.302
+cor.test(year$bathy,year$wind) #-0.019
+cor.test(year$bathy,year$wave) #-0.027
+cor.test(year$dist,year$wind) #-0.087
+cor.test(year$dist,year$wave) #-0.008
+cor.test(year$slope,year$wind) #0.102
+cor.test(year$slope,year$wave) #0.071
+cor.test(year$sednum,year$wind) #0.112
+cor.test(year$sednum,year$wave) #0.127
+cor.test(year$NAO,year$wind) #-0.451#########
+cor.test(year$NAO,year$wave) #-0.120
+cor.test(year$eco,year$wind) #0.330
+cor.test(year$eco,year$wave) #0.222
+cor.test(year$wind,year$wave) #-0.080
+cor.test(year$bathy,year$SrvyBgY) #0.105
+cor.test(year$dist,year$SrvyBgY) # 0.021
+cor.test(year$slope,year$SrvyBgY) #-0.062
+cor.test(year$sednum,year$SrvyBgY) #-0.102
+cor.test(year$NAO,year$SrvyBgY) #0.642#############
+cor.test(year$eco,year$SrvyBgY) #-0.186
+cor.test(year$wind,year$SrvyBgY) #-0.262
+cor.test(year$wave,year$SrvyBgY) #-0.023
 
-cor.test(year$bathy,year$SrvyBgY) #0.100
-cor.test(year$dist,year$SrvyBgY) # -0.014
-cor.test(year$slope,year$SrvyBgY) #-0.014
-cor.test(year$sednum,year$SrvyBgY) #-0.137
-cor.test(year$NAO,year$SrvyBgY) #0.641#############
-cor.test(year$eco,year$SrvyBgY) #-0.222
-cor.test(year$wind,year$SrvyBgY) #-0.269
-cor.test(year$wave,year$SrvyBgY) #-0.065
-cor.test(year$bival,year$SrvyBgY) #-0.095
 
 
 
@@ -2616,13 +2603,26 @@ cor.test(year$bival,year$SrvyBgY) #-0.095
 
 #negative binomial
 library(MASS)
-#sco2$slopesq=sco2$slope^2
-#sco2$distsq=sco2$dist^2#random effects (1|Transect) and (1|SurveyBeginYear)
-#sco2=data.frame(sco2)
-#sco2$Transect=as.factor(sco2$Transect)
-#sco2$SurveyBeginYear=as.factor(sco2$SurveyBeginYear)
-
+#year$slopesq=year$slope^2
+#year$distsq=year$dist^2#random effects (1|Transect) and (1|SurveyBeginYear)
+#year=data.frame(year)
+#year$eco=as.factor(year$eco)
+#year$sednum=as.factor(year$sednum)
+#year$SrvyBgY=as.factor(year$SrvyBgY)
 library(lme4)
+
+m37<-glmer.nb(Count~slope2+year$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
+  m38<-glmer.nb(Count~dist2+slope2+year$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
+m39<-glmer.nb(Count~bathy2 + dist2 + slope2 + year$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
+m40<-glmer.nb(Count~bathy2 + slope2 + year$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
+m41<-glmer.nb(Count~bathy2 + dist2 + year$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
+m41a<-glmer.nb(Count~bathy2 + poly(dist2,2) + year$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
+m41b<-glmer.nb(Count~bathy2+poly(dist2,2) +year$sednum +poly(NAO2,2)+(1|Transect)+(1|SurveyBeginYear), data=year)
+m42<-glmer.nb(Count~bathy2 + dist2 + slope2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
+m43<-glmer.nb(Count~bathy2 + dist2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
+m44<-glmer.nb(Count~bathy2 + slope2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
+
+
 
 #Weighted AIC
 library(MuMIn)
