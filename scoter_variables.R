@@ -2554,9 +2554,9 @@ results<-boot(data=year, statistic = bs, R=1000)
 
 
 #multicollinearity
-year$SrvyBgY=as.numeric(year$SrvyBgY)
-year$sednum=as.numeric(year$sednum)
-year$eco=as.numeric(year$eco)
+#year$SrvyBgY=as.numeric(year$SrvyBgY)
+#year$sednum=as.numeric(year$sednum)
+#year$eco=as.numeric(year$eco)
 
 cor.test(year$bathy,year$dist) #-0.186
 cor.test(year$bathy,year$slope) #0.181
@@ -2606,28 +2606,36 @@ library(MASS)
 #year$slopesq=year$slope^2
 #year$distsq=year$dist^2#random effects (1|Transect) and (1|SurveyBeginYear)
 #year=data.frame(year)
-#year$eco=as.factor(year$eco)
-#year$sednum=as.factor(year$sednum)
-#year$SrvyBgY=as.factor(year$SrvyBgY)
+year$eco=as.factor(year$eco)
+year$sednum=as.factor(year$sednum)
+year$SrvyBgY=as.factor(year$SrvyBgY)
+year<-na.omit(year)
 library(lme4)
 
-m37<-glmer.nb(Count~slope2+year$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
-  m38<-glmer.nb(Count~dist2+slope2+year$sednum+NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
-m39<-glmer.nb(Count~bathy2 + dist2 + slope2 + year$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
-m40<-glmer.nb(Count~bathy2 + slope2 + year$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
-m41<-glmer.nb(Count~bathy2 + dist2 + year$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
-m41a<-glmer.nb(Count~bathy2 + poly(dist2,2) + year$sednum + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
-m41b<-glmer.nb(Count~bathy2+poly(dist2,2) +year$sednum +poly(NAO2,2)+(1|Transect)+(1|SurveyBeginYear), data=year)
-m42<-glmer.nb(Count~bathy2 + dist2 + slope2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
-m43<-glmer.nb(Count~bathy2 + dist2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
-m44<-glmer.nb(Count~bathy2 + slope2 + NAO2+(1|Transect)+(1|SurveyBeginYear), data=year)
-
-
+m1<-glmer(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+(1|SrvyBgY), data=year, family = 'poisson',na.action = 'na.pass')
+m1a<-glm(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY, data=year, family = 'poisson',na.action = 'na.pass')
+summary(m1)
+m2<-glm(Count~NAO2+wind2+I(wind2^2)+wave2, data=year, family= 'poisson', na.action = 'na.pass')
+m3<-glm(Count~eco+bathy2+I(bathy2^2)+dist2+I(dist2^2)+slope2+sednum+SrvyBgY, data=year, family = 'poisson',na.action = 'na.pass')
+summary(m2)
+m4<-glm(Count~eco+bathy2+I(bathy2^2)+dist2+I(dist2^2)+slope2+sednum+NAO2+wind2+I(wind2^2)+wave2+SrvyBgY, data=year, family = 'poisson',na.action = 'na.pass')
+m5<-glm(Count~dist2*NAO2+dist2*bathy2+NAO2*bathy2, data=year, family = 'poisson',na.action = 'na.pass')
+m6<-glm(Count~bathy2+I(bathy2^2)+dist2+I(dist2^2)+sednum+SrvyBgY+wind2+dist2*NAO2+dist2*bathy2+NAO2*bathy2,data=year, family = 'poisson',na.action = 'na.pass')
+m7<-glm(Count~eco+bathy2+I(bathy2^2)+dist2+I(dist2^2)+slope2+sednum+NAO2+wind2+I(wind2^2)+wave2+SrvyBgY, data=year, family = 'poisson',na.action = 'na.pass')
+m8<-glm(Count~bathy2+I(bathy2^2)+dist2+I(dist2^2)+sednum+SrvyBgY+wind2+dist2*NAO2+dist2*bathy2+NAO2*bathy2,data=year, family = 'poisson',na.action = 'na.pass')
+summary(m5)
+summary(m1a)
+summary(m2)
+summary(m3)
+summary(m4)
+summary(m6)
+summary(m7)
+summary(m8)
 
 #Weighted AIC
 library(MuMIn)
 
-out.put<-model.sel(m41b,m36c,m41a,m64c,m64a,m34,m36,m36a,m38,m39,m41,m45,m64,m62,m72)
+out.put<-model.sel(m1a,m2,m3,m4,m5,m6,m7,m8)
 out.put
 #top model m36c(wt=0.293),m41b(delta=1.16,wt=0.164),m64c(delta=1.24,wt=0.158)
 
