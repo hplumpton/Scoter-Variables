@@ -2493,7 +2493,7 @@ test = (-train)
 ytest = y[test]
 
 lasso2<-glmnet(x,year$Count, family = "poisson", alpha=1)
-lasso<-glmnet(cov,year$Count, family = "poisson", alpha=1)
+lasso<-glmnet(cov2,year$Count, family = "poisson", alpha=1)
 cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s=0.968431139)
 
@@ -2506,10 +2506,12 @@ bestlam <- 0.968431139
 
 cov = matrix(c(year[,7],year[,8],year[,9],year[,11],year[,12],year[,14],year[,16],year[,17]), 16733, 8)
 #slope2,NAO2, eco, dist2, sednum wind2, wave2, bathy2
+cov2= matrix(c(year[,4],year[,5],year[,6],year[,9],year[,10],year[,12],year[,13],year[,15]),16733,8)
+#NAO, bathy, slope, eco, dist, sednum, wind, wave
 
-pfit <- predict(lasso, newx=cbind(matrix(0,16733,3),cov[,4],matrix(0,16733,dim(cov)[2]-4)),s=bestlam,type="response")
+pfit <- predict(lasso, newx=cbind(matrix(0,16733,2),cov2[,3],matrix(0,16733,dim(cov2)[2]-3)),s=bestlam,type="response")
 
-lasso.pred <- predict(lasso, newx=cbind(matrix(0,16733,1),x2[,2],matrix(0,16733,dim(x2)[2]-2)),s=bestlam,type="response")
+lasso.pred <- predict(lasso2, newx=cbind(matrix(0,16733,4),x[,5],matrix(0,16733,dim(x)[2]-5)),s=bestlam,type="response")
 
 lasso.mod <- glmnet(x2[train,], y[train], alpha = 1, lambda = bestlam)
 lasso.pred <- predict(lasso.mod, s = bestlam, newx = x2[test,])
@@ -2522,14 +2524,14 @@ mean((lasso.pred-ytest)^2)
 library(ggplot2)
 summary(pfit)
 summary(lasso.pred)
-dat=data.frame(x=cov[1:16233,4], X1=pfit)
-dat=data.frame(x=x2[1:16733,2], X1=lasso.pred)
+dat=data.frame(x=cov2[1:16733,3], X1=pfit)
+dat=data.frame(x=x[1:16733,5], X1=lasso.pred)
 ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
-  stat_smooth(method = "lm",se=FALSE)+
+  stat_smooth(method = "lm", se=FALSE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
-  xlab("Bathymetry (meters)")+
+  xlab("Distance to Shore (meters)")+
   ylab("Black Scoter Abundance")
 
 
