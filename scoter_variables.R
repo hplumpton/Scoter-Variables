@@ -2495,23 +2495,23 @@ ytest = y[test]
 lasso2<-glmnet(x,year$Count, family = "poisson", alpha=1)
 lasso<-glmnet(cov2,year$Count, family = "poisson", alpha=1)
 cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
-coef(cv.lasso,s=0.968431139)
+coef(cv.lasso,s=0.4799125)
 
 cv.lasso$cvm
 # cv MSE is 25
 bestlam <- 0.968431139
 #1se=1.944182
 #min=0.007319722
-#halfway between = 0.968431139
+#halfway between = 0.968431139, quarter = 0.4799125
 
 cov = matrix(c(year[,7],year[,8],year[,9],year[,11],year[,12],year[,14],year[,16],year[,17]), 16733, 8)
 #slope2,NAO2, eco, dist2, sednum wind2, wave2, bathy2
 cov2= matrix(c(year[,4],year[,5],year[,6],year[,9],year[,10],year[,12],year[,13],year[,15]),16733,8)
 #NAO, bathy, slope, eco, dist, sednum, wind, wave
 
-pfit <- predict(lasso, newx=cbind(matrix(0,16733,2),cov2[,3],matrix(0,16733,dim(cov2)[2]-3)),s=bestlam,type="response")
+pfit <- predict(lasso, newx=cbind(matrix(0,16733,6),cov2[,7],matrix(0,16733,dim(cov2)[2]-7)),s=bestlam,type="response")
 
-lasso.pred <- predict(lasso2, newx=cbind(matrix(0,16733,4),x[,5],matrix(0,16733,dim(x)[2]-5)),s=bestlam,type="response")
+lasso.pred <- predict(lasso2, newx=cbind(matrix(0,16733,7),x[,8],matrix(0,16733,dim(x)[2]-8)),s=bestlam,type="response")
 
 lasso.mod <- glmnet(x2[train,], y[train], alpha = 1, lambda = bestlam)
 lasso.pred <- predict(lasso.mod, s = bestlam, newx = x2[test,])
@@ -2524,8 +2524,8 @@ mean((lasso.pred-ytest)^2)
 library(ggplot2)
 summary(pfit)
 summary(lasso.pred)
-dat=data.frame(x=cov2[1:16733,3], X1=pfit)
-dat=data.frame(x=x[1:16733,5], X1=lasso.pred)
+dat=data.frame(x=cov2[1:16733,7], X1=pfit)
+dat=data.frame(x=x[1:16733,8], X1=lasso.pred)
 ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
   stat_smooth(method = "lm", se=FALSE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
@@ -2614,25 +2614,14 @@ year$SrvyBgY=as.factor(year$SrvyBgY)
 year<-na.omit(year)
 library(lme4)
 
-m1<-glmer(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+(1|SrvyBgY), data=year, family = 'poisson',na.action = 'na.pass')
-m1a<-glm(Count~NAO2+eco+bathy2+I(bathy2^2)+wind2+I(wind2^2)+dist2+I(dist2^2)+slope2+sednum+wave2+dist2*NAO2+dist2*bathy2+NAO2*bathy2+SrvyBgY, data=year, family = 'poisson',na.action = 'na.pass')
+m1<-glm(Count~eco+bathy2+I(bathy2^2)+wind2+dist2+slope2+wave2+SrvyBgY, data=year, family = 'poisson',na.action = 'na.pass')
+
 summary(m1)
-m2<-glm(Count~NAO2+wind2+I(wind2^2)+wave2, data=year, family= 'poisson', na.action = 'na.pass')
-m3<-glm(Count~eco+bathy2+I(bathy2^2)+dist2+I(dist2^2)+slope2+sednum+SrvyBgY, data=year, family = 'poisson',na.action = 'na.pass')
-summary(m2)
-m4<-glm(Count~eco+bathy2+I(bathy2^2)+dist2+I(dist2^2)+slope2+sednum+NAO2+wind2+I(wind2^2)+wave2+SrvyBgY, data=year, family = 'poisson',na.action = 'na.pass')
-m5<-glm(Count~dist2*NAO2+dist2*bathy2+NAO2*bathy2, data=year, family = 'poisson',na.action = 'na.pass')
-m6<-glm(Count~bathy2+I(bathy2^2)+dist2+I(dist2^2)+sednum+SrvyBgY+wind2+dist2*NAO2+dist2*bathy2+NAO2*bathy2,data=year, family = 'poisson',na.action = 'na.pass')
-m7<-glm(Count~eco+bathy2+I(bathy2^2)+dist2+I(dist2^2)+slope2+sednum+NAO2+wind2+I(wind2^2)+wave2+SrvyBgY, data=year, family = 'poisson',na.action = 'na.pass')
-m8<-glm(Count~bathy2+I(bathy2^2)+dist2+I(dist2^2)+sednum+SrvyBgY+wind2+dist2*NAO2+dist2*bathy2+NAO2*bathy2,data=year, family = 'poisson',na.action = 'na.pass')
-summary(m5)
-summary(m1a)
-summary(m2)
+
+m3<-glm(Count~bathy2+dist2+slope2, data=year, family = 'poisson',na.action = 'na.pass')
+
 summary(m3)
-summary(m4)
-summary(m6)
-summary(m7)
-summary(m8)
+
 
 #Weighted AIC
 library(MuMIn)
@@ -2689,19 +2678,24 @@ p+geom_point(data = scoters, aes(scoters$longitude_dd,
 map("state",add=TRUE)
 
 year<-data.frame(year)
-year<-na.omit(year)
+year2<-na.omit(year)
 
 #stat_smooth(method="lm", se=TRUE)
+sco.count<-read.csv("sco_count.csv")
+sco.count<-na.omit(sco.count)
+sco.count$SrvyBgY<-as.factor(sco.count$SrvyBgY)
 
-year2$fit<-lasso.pred
-distance<-ggplot(year2, aes(x=bathy2, y=Count))
+
+
+distance<-ggplot(sco.count, aes(x=bathy, y=Count))
 distance+geom_point(aes(group=SrvyBgY,color=SrvyBgY))+#x-axis is in meters
   stat_smooth(method="lm", formula=y~poly(x,2),se=FALSE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
+  labs(color='Survey Year')+
   xlab("Bathymetry (meters)")+
-  ylab("Expected Count")
+  ylab("Black Scoters")
 
 
 bath<-ggplot(year, aes(x=dist, y=bathy, group=eco, shape=eco))
