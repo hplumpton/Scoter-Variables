@@ -2493,13 +2493,13 @@ test = (-train)
 ytest = y[test]
 
 lasso2<-glmnet(x,year$Count, family = "poisson", alpha=1)
-lasso<-glmnet(cov2,year$Count, family = "poisson", alpha=1)
+lasso<-glmnet(cov,year$Count, family = "poisson", alpha=1)
 cv.lasso=cv.glmnet(x2,year$Count,family="poisson",alpha=1)
 coef(cv.lasso,s=0.4799125)
 
 cv.lasso$cvm
 # cv MSE is 25
-bestlam <- 0.968431139
+bestlam <- 0.4799125
 #1se=1.944182
 #min=0.007319722
 #halfway between = 0.968431139, quarter = 0.4799125
@@ -2508,6 +2508,8 @@ cov = matrix(c(year[,7],year[,8],year[,9],year[,11],year[,12],year[,14],year[,16
 #slope2,NAO2, eco, dist2, sednum wind2, wave2, bathy2
 cov2= matrix(c(year[,4],year[,5],year[,6],year[,9],year[,10],year[,12],year[,13],year[,15]),16733,8)
 #NAO, bathy, slope, eco, dist, sednum, wind, wave
+
+pfit <- predict(lasso, newx=cbind(matrix(0,16733,5),cov[,6],matrix(0,16733,dim(cov)[2]-6)),s=bestlam,type="response")
 
 pfit <- predict(lasso, newx=cbind(matrix(0,16733,6),cov2[,7],matrix(0,16733,dim(cov2)[2]-7)),s=bestlam,type="response")
 
@@ -2524,32 +2526,97 @@ mean((lasso.pred-ytest)^2)
 library(ggplot2)
 summary(pfit)
 summary(lasso.pred)
-dat=data.frame(x=cov2[1:16733,7], X1=pfit)
+dat=data.frame(x=cov[1:16733,6], X1=pfit)
 dat=data.frame(x=x[1:16733,8], X1=lasso.pred)
 ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
   stat_smooth(method = "lm", se=FALSE)+
   theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  xlim(-1,1)+
+  #scale_y_continuous(limits = c(0,5))+
   theme(axis.title.x=element_text(size=15, color = "black"))+
   theme(axis.title.y=element_text(size=15, color = "black"))+
-  xlab("Distance to Shore (meters)")+
-  ylab("Black Scoter Abundance")
+  xlab("Distance to shore (meters)")+
+  ylab("Black Scoter Abundance (count)")
 
 
-#Getting Standard Errors through bootstrapping (in progress)
 
-n<-1e4
-bhat<-x2%*%beta
-b<-1*bhat+1*rnorm(n)
+###bathy.half#################################################################
+pfit <- predict(lasso, newx=cbind(matrix(0,16733,1),cov2[,2],matrix(0,16733,dim(cov2)[2]-2)),s=bestlam,type="response")
+dat=data.frame(x=cov2[1:16733,2], X1=pfit)
+ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
+  stat_smooth(method = "lm", se=FALSE)+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  xlim(-30,0)+
+  #scale_y_continuous(limits = c(0,5))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Bathymetry (meters)")+
+  ylab("Black Scoter Abundance (count)")
 
-lmod2<-summary(lm(y~scale(x2)-1))
-lmod_ses<-data.frame(lmod[4])
+###dist.half###################################################################
+pfit <- predict(lasso, newx=cbind(matrix(0,16733,4),cov2[,5],matrix(0,16733,dim(cov2)[2]-5)),s=bestlam,type="response")
+dat=data.frame(x=cov2[1:16733,5], X1=pfit)
+ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
+  stat_smooth(method = "lm", se=FALSE)+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  #xlim(0,60000)+
+  #scale_y_continuous(limits = c(0,5))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Distance to shore (meters)")+
+  ylab("Black Scoter Abundance (count)")
 
-library(boot)
-bs<-function(data, b, forumla){
-  d<-data[b,]
-    return(lm(d[,2]~d[,4],data = d)$coef[2])
-}
-results<-boot(data=year, statistic = bs, R=1000)
+###slope.half.scale#########################################################
+pfit <- predict(lasso, newx=cbind(cov[,1],matrix(0,16733,dim(cov)[2]-1)),s=bestlam,type="response")
+dat=data.frame(x=cov[1:16733,1], X1=pfit)
+ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
+  stat_smooth(method = "lm", se=FALSE)+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  xlim(0,5)+
+  #scale_y_continuous(limits = c(0,5))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Slope of Ocean Floor (scaled)")+
+  ylab("Black Scoter Abundance (count)")
+
+###bathy2.quart###############################################################
+pfit <- predict(lasso, newx=cbind(matrix(0,16733,1),cov2[,2],matrix(0,16733,dim(cov2)[2]-2)),s=bestlam,type="response")
+dat=data.frame(x=cov2[1:16733,2], X1=pfit)
+ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
+  stat_smooth(method = "lm",formula=y~poly(x,2), se=FALSE)+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  xlim(-25,0)+
+  #scale_y_continuous(limits = c(0,5))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Bathymetry (meters)")+
+  ylab("Black Scoter Abundance (count)")
+
+###wind.scale.quart###########################################################
+pfit <- predict(lasso, newx=cbind(matrix(0,16733,5),cov[,6],matrix(0,16733,dim(cov)[2]-6)),s=bestlam,type="response")
+dat=data.frame(x=cov[1:16733,6], X1=pfit)
+ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
+  stat_smooth(method = "lm", se=FALSE)+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  xlim(-1,1)+
+  #scale_y_continuous(limits = c(0,5))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Average Wind Speed (scaled)")+
+  ylab("Black Scoter Abundance (count)")
+
+###wave.scale.quart########################################################
+pfit <- predict(lasso, newx=cbind(matrix(0,16733,6),cov[,7],matrix(0,16733,dim(cov)[2]-7)),s=bestlam,type="response")
+dat=data.frame(x=cov[1:16733,7], X1=pfit)
+ggplot(data=dat,aes(x=x,y=X1)) + #geom_line()+
+  stat_smooth(method = "lm", se=FALSE)+
+  theme(panel.background = element_rect(colour = 'black', fill='white'))+
+  xlim(-1,1)+
+  #scale_y_continuous(limits = c(0,5))+
+  theme(axis.title.x=element_text(size=15, color = "black"))+
+  theme(axis.title.y=element_text(size=15, color = "black"))+
+  xlab("Average Time between Waves (scaled)")+
+  ylab("Black Scoter Abundance (count)")
 
 
 
